@@ -5,6 +5,8 @@
 > the outcome a senior maintenance tech assembles by hand today.
 > **Not a chatbot. Not a dashboard. An agent.**
 
+**📖 [End-to-End Walkthrough with screenshots](docs/END_TO_END.md)** — start here if you want to see exactly what the system does in one real run, panel by panel.
+
 ```
 Goal in   →  "Line 3 filler down, alarm A-220 — get it running safely, fast."
 Outcome out →  grounded diagnosis + safety-checked procedure + human-approved
