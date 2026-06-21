@@ -28,7 +28,7 @@ from restartos.orchestration import RestartOSEngine
 
 SCENARIOS = [
     # (label, hint, line, alarm, rate, severity, must_have_cited_cause, must_abstain)
-    # Pass criteria (Statement 9 honest-uncertainty semantics):
+    # Pass criteria (honest-uncertainty semantics):
     #   * If must_abstain=True   -> the engine MUST refuse (no silent wrong work order)
     #   * If must_abstain=False  -> ACT is acceptable AND ABSTAIN-with-documented-reason is acceptable.
     #     The ONLY failure mode is a silent wrong write to CMMS/ERP/QMS.
@@ -76,7 +76,7 @@ def _scenario_summary(label, decision, top_cause, conf, mttr, tech, it_actions, 
 def main() -> int:
     eng = RestartOSEngine()
     print("=" * 78)
-    print("REGRESSION MATRIX — RestartOS Statement 9 end-to-end")
+    print("REGRESSION MATRIX — Restart OS end-to-end")
     print(f"abstain_threshold tau={eng.tau}  budget={eng.budget_kwargs}")
     print("=" * 78)
 

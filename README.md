@@ -6,7 +6,7 @@
 
 [![CI](https://img.shields.io/github/actions/workflow/status/Avvv19/restartos-agentic-line-recovery/ci.yml?branch=main&label=CI&style=for-the-badge&logo=github&logoColor=white&color=10b981)](https://github.com/Avvv19/restartos-agentic-line-recovery/actions/workflows/ci.yml)
 [![License](https://img.shields.io/badge/License-MIT-6366f1?style=for-the-badge)](LICENSE)
-[![Statement 9](https://img.shields.io/badge/Statement_9-Agent_Orchestration-a855f7?style=for-the-badge)](#)
+[![Agent Orchestration](https://img.shields.io/badge/Agent_Orchestration-Manufacturing-a855f7?style=for-the-badge)](#)
 [![Docker](https://img.shields.io/badge/docker_compose-up-22d3ee?style=for-the-badge&logo=docker&logoColor=white)](docker-compose.yml)
 [![Status](https://img.shields.io/badge/Status-Code--production_ready-fbbf24?style=for-the-badge)](#status--where-this-actually-stands)
 
@@ -29,7 +29,7 @@ A production line goes down. A senior maintenance technician spends 45 to 90 min
 **Restart OS does that 45-90 minutes of paperwork in about 30 seconds.** The technician gets a clean, cited, safety-checked proposal on a single screen and a button labeled *Approve*. They press it. They go fix the machine.
 
 > [!IMPORTANT]
-> **This is not a chatbot. This is not a dashboard.** It is an agent: it takes a goal, calls 10 tools across the plant's silos, makes decisions, and produces a real outcome — a work order written into the CMMS, parts reserved in the ERP, a technician paged, a QC plan filed. Then the human says yes or no.
+> It is a fully autonomous agent: it takes a goal, calls 10 tools across the plant's silos, makes decisions, and produces a real outcome — a work order written into the CMMS, parts reserved in the ERP, a technician paged, a QC plan filed. Then the human says yes or no.
 
 ---
 
@@ -421,7 +421,7 @@ A: The cross-model verifier rejects it. The human gate rejects it. If both miss,
 
 <div align="center">
 
-**Restart OS** · Statement 9 · An agent, not a chatbot.
+**Restart OS** · Agentic Line-Recovery for Manufacturing
 
 [📖 End-to-End](docs/END_TO_END.md) · [🟡 Calibration](docs/CALIBRATION.md) · [🏭 Plant Brief](#-for-plant-managers-non-it-readers) · [🧑‍💻 Engineer Brief](#-for-engineers)
 

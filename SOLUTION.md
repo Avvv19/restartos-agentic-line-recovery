@@ -1,9 +1,10 @@
-# Restart OS — the solution to Problem Statement 9
+# Restart OS — Solution Architecture
 
-## The problem, reverse-engineered
-> "Build an AI agent that solves a real, specific pain in manufacturing. Not a chatbot.
-> Not a dashboard. An agent that takes a goal, makes decisions, calls tools, and produces
-> an outcome a human would otherwise do by hand."
+## The problem
+> When a production line goes down, a senior maintenance tech spends 45–90 minutes
+> chasing data across 8 siloed systems just to write the work order. Restart OS is an
+> autonomous agent that takes a goal, makes decisions, calls tools, and produces the
+> outcome a human would otherwise assemble by hand.
 
 The specific pain we chose: **unplanned line-down fault resolution.** When a line stops,
 a senior maintenance tech today manually chases information across siloed systems
@@ -19,15 +20,14 @@ verified Recovery Work Package: likely cause + evidence trail + safe (LOTO) proc
 + parts + human-approved CMMS work order + QC plan + shift handover.
 ```
 
-## Why it is an agent (not a chatbot, not a dashboard)
+## Why it is an autonomous agent
 | Requirement | How Restart OS satisfies it |
 |---|---|
-| Takes a **goal** | An `Incident` contract (asset, symptom, alarm, $/hr) — not a chat prompt. |
+| Takes a **goal** | An `Incident` contract (asset, symptom, alarm, $/hr) — a structured input, not a prompt. |
 | Makes **decisions** | Which tool to call next (agentic loop); the ranked differential; act vs **abstain**; the economics-routed gate. |
 | Calls **tools** | A typed toolbelt over the plant silos (`tools.py`): historian, CMMS, manual RAG, MOC, parts, safety, MES, labour, shift notes, security. |
 | Produces an **outcome** | Idempotent **writes to IT** (CMMS work order, parts reservation, QC plan, notifications) — the artifact a human assembled by hand. |
-| Not a chatbot | There is no free chat. The surface is a run + approval cockpit. |
-| Not a dashboard | No KPI charts. The human has two jobs: verify the reasoning, give go/no-go. |
+| Human-in-the-loop | The operator cockpit shows full reasoning; the human verifies and gives go/no-go. |
 
 ## The flow (what actually executes)
 `goal → resolve asset (join PI tag ↔ SAP funcloc ↔ OEM model) → agentic tool-use loop

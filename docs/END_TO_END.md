@@ -6,11 +6,11 @@ This walkthrough uses the run `INC-ad9f9fa7` — a live execution against NVIDIA
 
 ---
 
-## 1. The problem (Statement 9)
+## 1. The problem
 
 > Manufacturing runs the physical economy, but the people who run it — operators, engineers, maintenance techs, plant managers — spend most of their day on work that doesn't need a human. Chasing information across siloed systems. Hunting through 400-page manuals. Writing reports. Troubleshooting the same faults repeatedly. Translating tribal knowledge into something the next shift can use.
 >
-> Build an AI agent that solves a real, specific pain experienced by someone who works in manufacturing. Not a chatbot. Not a dashboard. **An agent that takes a goal, makes decisions, calls tools, and produces an outcome a human would otherwise do by hand.**
+> Restart OS is an autonomous agent that takes a goal, makes decisions, calls tools, and produces an outcome a human would otherwise do by hand.
 
 The specific pain Restart OS solves: **unplanned line-down fault resolution**. When a line stops, a senior maintenance tech today manually:
 
