@@ -21,7 +21,7 @@ Claude / GPT / local Ollama models when keys are present.
 
 ## Status — code-production ready
 
-[![CI](https://github.com/REPLACE_USER/restartos-agentic-line-recovery/actions/workflows/ci.yml/badge.svg)](https://github.com/REPLACE_USER/restartos-agentic-line-recovery/actions/workflows/ci.yml)
+[![CI](https://github.com/Avvv19/restartos-agentic-line-recovery/actions/workflows/ci.yml/badge.svg)](https://github.com/Avvv19/restartos-agentic-line-recovery/actions/workflows/ci.yml)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](#license)
 
 | Layer | Status | Evidence |
