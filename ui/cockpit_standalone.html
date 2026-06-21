@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RestartOS — Fault-to-Fix Cockpit</title>
+<style>
+:root{--bg:#FbFbFd;--surface:#fff;--ink:#0B0E14;--muted:#5A6473;--faint:#8A93A3;
+--line:#E3E7EE;--cobalt:#2563EB;--it:#15803D;--vf:#B45309;--gt:#B91C1C;--ag:#6D28D9}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);
+font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.5}
+.mono{font-family:"SF Mono",Consolas,monospace}
+.wrap{max-width:880px;margin:0 auto;padding:22px 18px 80px}
+.bar{background:#0B0E14;color:#fff;border-radius:12px 12px 0 0;padding:12px 16px;
+display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;font-size:13px}
+.bar .live{color:#86EFAC;font-weight:600;font-size:12px}
+.card{background:var(--surface);border:1px solid var(--line);border-top:none;
+border-radius:0 0 12px 12px;padding:16px 18px}
+h1{font-size:18px;margin:0}
+.sect{font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);
+font-weight:700;margin:18px 0 7px}
+.trace div{font-size:12.8px;margin:3px 0}.ok{color:var(--it)}.warn{color:var(--vf)}.bad{color:var(--gt)}
+.dx{display:flex;align-items:center;gap:10px;font-size:13px;margin:5px 0}
+.bar-c{flex:0 0 120px;height:8px;background:#EEF1F6;border-radius:4px;overflow:hidden}
+.bar-f{height:100%;background:var(--cobalt)}
+.wo{background:#F7F9FC;border:1px solid var(--line);border-radius:8px;padding:12px 14px;font-size:12.8px}
+.risk{color:var(--gt);font-weight:700}
+.pill{display:inline-block;font-size:10.5px;font-weight:700;border-radius:999px;
+padding:2px 9px;border:1px solid;margin-right:5px}
+.p-pass{color:var(--it);border-color:#BBF7D0;background:#F0FDF4}
+.p-fail{color:var(--gt);border-color:#FECACA;background:#FEF2F2}
+.btns{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap}
+.btn{font-size:12.8px;font-weight:600;border-radius:8px;padding:9px 16px;border:1px solid var(--line);background:#fff;cursor:pointer}
+.btn.pri{background:var(--it);color:#fff;border-color:var(--it)}.btn.dng{color:var(--gt);border-color:#FECACA}
+.muted{color:var(--muted);font-size:12.5px}
+.kv{font-size:12.6px;margin:2px 0}.kv b{color:var(--ink)}
+.drop{border:2px dashed var(--line);border-radius:10px;padding:20px;text-align:center;color:var(--muted);font-size:13px;margin-bottom:14px;cursor:pointer}
+.refute{color:var(--vf);font-size:12.4px;margin:2px 0}
+code{background:#F1F5F9;border-radius:4px;padding:1px 5px;font-size:11.5px}
+</style></head>
+<body><div class="wrap">
+<div class="drop" id="drop">Drop a <code>run_*.json</code> artifact here, or click to load
+(<code>_it_state/latest_run.json</code>). The cockpit auto-tries to load the latest run.</div>
+<input type="file" id="file" accept="application/json" style="display:none">
+
+<div class="bar"><span id="title">RestartOS — load a run</span><span class="live" id="live"></span></div>
+<div class="card" id="root"><div class="muted">No run loaded yet.</div></div>
+</div>
+<script>
+const $=id=>document.getElementById(id);
+function esc(s){return String(s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]))}
+function render(r){
+  const dec=r.decision; const wp=r.work_package;
+  $('title').textContent=`FAULT-TO-FIX · ${r.incident_id} · ${dec}`;
+  $('live').textContent=`● ${r.framework}`;
+  let h='';
+  // trace
+  h+='<div class="sect">Agent trace</div><div class="trace">';
+  (r.trace||[]).forEach(t=>{
+    const cls=/REFUT|abstain|degraded/i.test(t)?'warn':'ok';
+    h+=`<div><span class="${cls}">●</span> ${esc(t)}</div>`;});
+  h+='</div>';
+  if(dec==='ABSTAIN'){
+    h+='<div class="sect">Decision · ABSTAIN → escalate</div>';
+    h+=`<div class="wo"><span class="risk">ESCALATED</span> ${esc(r.escalation.reason)}<br>
+        to: ${esc(r.escalation.to)}</div>`;
+  }else{
+    // diagnosis
+    h+=`<div class="sect">Diagnosis · confidence ${wp.confidence}</div>`;
+    const lc=wp.likely_cause;
+    h+=`<div class="dx"><div class="bar-c"><div class="bar-f" style="width:${Math.round(lc.confidence*100)}%"></div></div>
+        <span><b>${esc(lc.cause)}</b> · ISO 14224 ${esc(lc.iso14224_code||'')}</span></div>`;
+    h+=`<div class="muted">What would change my mind: ${esc(lc.would_change_my_mind)}</div>`;
+    // verifier + safety
+    const v=r.verifier,s=r.safety;
+    h+='<div class="sect">Verification gates</div>';
+    h+=`<div><span class="pill ${v.passed?'p-pass':'p-fail'}">verifier ${v.passed?'PASS':'FAIL'}</span>
+        <span class="pill ${s.passed?'p-pass':'p-fail'}">safety ${s.passed?'PASS':'FAIL'}</span>
+        <span class="muted">cross-model: ${esc(v.verifier_model)} · citation-resolution ${v.citation_resolution_rate} · hallucinated parts ${v.hallucinated_parts.length}</span></div>`;
+    (v.refutations||[]).forEach(x=>h+=`<div class="refute">⚠ ${esc(x)} (caught → re-planned)</div>`);
+    // work order
+    h+='<div class="sect">Proposed work order</div>';
+    const wo=wp.work_order_draft;
+    h+=`<div class="wo"><span class="risk">risk ${esc(wo.risk)}</span> · Asset ${esc(wo.funcloc)}
+        · Cause ${esc(wo.cause)} (${esc(wo.iso14224)}) · ${wo.est_minutes} min · ${wo.techs} tech<br>`;
+    (wp.parts_request||[]).forEach(p=>h+=`Parts <span class="ok">✓</span> ${esc(p.part_no)} (${esc(p.on_hand)} on hand · bin ${esc(p.bin)}) `);
+    h+=`<br>Safe checks <span class="ok">✓</span> ${esc((wp.safe_checks||[]).join('; '))}</div>`;
+    // gate
+    const g=r.gate;
+    h+='<div class="sect">Authorization gate</div>';
+    h+=`<div class="kv">risk-class <b>${esc(g.risk_class)}</b> → approver <b>${esc(g.approver_role)}</b>
+        · e-sign ${g.e_sign?'required':'—'} · required conf ${g.required_confidence} (economics-routed)</div>`;
+    h+=`<div class="kv">outcome <b>${esc(g.outcome)}</b> — ${esc(g.rationale)}</div>`;
+    // economics
+    const e=wp.economics;
+    h+='<div class="sect">Economics</div>';
+    h+=`<div class="kv">value/event <b>$${Number(e.value_per_event_usd).toLocaleString()}</b>
+        (MTTR ${e.mttr_baseline_min}→${e.mttr_agent_min} min @ $${Number(e.downtime_rate_per_hr).toLocaleString()}/hr)
+        · agent cost $${e.agent_cost_usd}</div>`;
+    h+='<div class="btns"><span class="btn dng">Reject</span><span class="btn">Edit</span>'+
+       '<span class="btn pri">Approve &amp; create WO</span></div>';
+    h+='<div class="muted" style="margin-top:8px">Buttons are the human go/no-go surface. '+
+       'This run was decided by: '+esc(g.outcome)+'.</div>';
+  }
+  // router + audit footer
+  const u=r.router_usage;
+  h+='<div class="sect">Model router (token usage by problem type)</div>';
+  h+=`<div class="kv mono">calls ${u.total_calls} · tokens ${u.total_tokens} · cost $${u.total_cost_usd} · providers ${esc((u.providers_used||[]).join(', '))}</div>`;
+  Object.entries(u.by_problem_type||{}).forEach(([k,v])=>h+=`<div class="kv mono muted">${esc(k)}: ${v.calls} calls · ${v.tokens} tok</div>`);
+  h+=`<div class="sect">Tamper-evident audit</div><div class="kv mono muted">${(r.audit||[]).length} hash-chained entries · last hash ${(r.audit&&r.audit.length?esc(r.audit[r.audit.length-1].hash):'')}…</div>`;
+  $('root').innerHTML=h;
+}
+function load(txt){try{render(JSON.parse(txt))}catch(e){$('root').innerHTML='<div class="bad">Invalid run JSON: '+esc(e.message)+'</div>'}}
+$('drop').onclick=()=>$('file').click();
+$('file').onchange=e=>{const f=e.target.files[0];if(f){const r=new FileReader();r.onload=()=>load(r.result);r.readAsText(f)}};
+['dragover','drop'].forEach(ev=>$('drop').addEventListener(ev,e=>{e.preventDefault();
+  if(ev==='drop'&&e.dataTransfer.files[0]){const r=new FileReader();r.onload=()=>load(r.result);r.readAsText(e.dataTransfer.files[0])}}));
+const EMBEDDED={"incident_id": "INC-56783ec3", "decision": "ACT", "work_package": {"incident_id": "INC-56783ec3", "asset_funcloc": "FL-PKG-03-FILL", "likely_cause": {"cause": "Nozzle clog", "iso14224_code": "1.2.1", "confidence": 0.87, "supporting": ["EV-8f19fda9", "EV-114fe04c", "EV-7d562e3e", "EV-9268d195", "EV-c0d885df", "EV-7137b28f", "EV-8f9f948d"], "refuting": [], "would_change_my_mind": "flow normalizes after CIP flush without nozzle swap"}, "evidence_trail": ["EV-8f19fda9", "EV-114fe04c", "EV-7d562e3e", "EV-9268d195", "EV-c0d885df", "EV-7137b28f", "EV-8f9f948d"], "safe_checks": ["Apply lockout-tagout per plant LOTO-FILL-03.", "Reinstall, remove LOTO, run CIP, verify flow 36-40 L/min."], "troubleshooting_path": [{"n": 1, "text": "Apply lockout-tagout per plant LOTO-FILL-03.", "citation": {"source_system": "MANUAL", "locator": "MANUAL:Acme_Model_8200.md#7.4@p.143", "resolved": true, "excerpt": "Apply lockout-tagout per plant LOTO-FILL-03."}, "loto_required": true, "part_numbers": []}, {"n": 2, "text": "Relieve line pressure.", "citation": {"source_system": "MANUAL", "locator": "MANUAL:Acme_Model_8200.md#7.4@p.143", "resolved": true, "excerpt": "Relieve line pressure."}, "loto_required": false, "part_numbers": []}, {"n": 3, "text": "Remove and inspect nozzle assembly.", "citation": {"source_system": "MANUAL", "locator": "MANUAL:Acme_Model_8200.md#7.4@p.143", "resolved": true, "excerpt": "Remove and inspect nozzle assembly."}, "loto_required": false, "part_numbers": []}, {"n": 4, "text": "Replace with nozzle kit 8200-NZ if scored or clogged.", "citation": {"source_system": "MANUAL", "locator": "MANUAL:Acme_Model_8200.md#7.4@p.143", "resolved": true, "excerpt": "Replace with nozzle kit 8200-NZ if scored or clogged."}, "loto_required": false, "part_numbers": ["8200-NZ"]}, {"n": 5, "text": "Flush feed line.", "citation": {"source_system": "MANUAL", "locator": "MANUAL:Acme_Model_8200.md#7.4@p.143", "resolved": true, "excerpt": "Flush feed line."}, "loto_required": false, "part_numbers": []}, {"n": 6, "text": "Reinstall, remove LOTO, run CIP, verify flow 36-40 L/min.", "citation": {"source_system": "MANUAL", "locator": "MANUAL:Acme_Model_8200.md#7.4@p.143", "resolved": true, "excerpt": "Reinstall, remove LOTO, run CIP, verify flow 36-40 L/min."}, "loto_required": true, "part_numbers": []}], "work_order_draft": {"funcloc": "FL-PKG-03-FILL", "cause": "Nozzle clog", "iso14224": "1.2.1", "risk": "LOTO_PHYSICAL", "est_minutes": 45, "techs": 1}, "parts_request": [{"part_no": "8200-NZ", "desc": "Nozzle kit Model 8200", "on_hand": "2", "bin": "A4"}], "qc_sampling_plan": {"aql": 2.5, "n": 5, "check": "fill volume post-restart"}, "restart_readiness": ["LOTO removed", "CIP complete", "flow 36-40 L/min verified", "QC sample pass", "supervisor sign-off"], "shift_handover": "FL-PKG-03-FILL A-220: likely Nozzle clog (conf 0.87). Plan grounded to Manual Acme Model 8200 \u00a77.4. Verifier mock-verify PASS, safety PASS.  Fix confirmed: post-CIP flow back in 36-40 band per manual acceptance.", "decision": "ACT", "confidence": 0.87, "economics": {"downtime_rate_per_hr": 10000.0, "mttr_baseline_min": 90, "mttr_agent_min": 45, "value_per_event_usd": 7500.0, "agent_cost_usd": 0.0, "p_wrong_acted": "driven->0 via grounding+cross-model verify+gate"}, "created_at": 1781846403.0410633}, "gate": {"risk_class": "LOTO_PHYSICAL", "approver_role": "maintenance_lead", "approver_identity": "maint.lead.kpatel", "e_sign": true, "outcome": "APPROVED", "rationale": "maintenance_lead (maint.lead.kpatel) -> APPROVED", "required_confidence": 0.42, "actual_confidence": 0.87}, "audit": [{"seq": 0, "kind": "intake", "ts": 1781846401.7128534, "hash": "1060fd4e73103bbd", "prev": "0000000000000000", "body": {"asset_hint": "Line 3 filler", "symptom": "down", "line": "Line 3", "alarm_code": "A-220", "severity": "HIGH", "downtime_rate_per_hr": 10000.0, "started_at": 1781846401.704782, "reported_by": "operator", "incident_id": "INC-56783ec3"}}, {"seq": 1, "kind": "resolve_asset", "ts": 1781846402.3200498, "hash": "b56ba4a4713eab4b", "prev": "1060fd4e73103bbd", "body": {"funcloc": "FL-PKG-03-FILL", "confidence": 0.4}}, {"seq": 2, "kind": "fast_path", "ts": 1781846402.3254428, "hash": "57361fa6fb5a18d2", "prev": "b56ba4a4713eab4b", "body": {"preliminary_cause": "Nozzle clog"}}, {"seq": 3, "kind": "gather_round_0", "ts": 1781846402.95615, "hash": "072f7a9122fa4930", "prev": "57361fa6fb5a18d2", "body": {"n_items": 19, "n_contradictions": 0, "sources": ["ASSET_REGISTRY", "CMMS", "HISTORIAN", "MANUAL", "MES", "MOC", "PARTS", "SAFETY", "SHIFT_NOTES"], "total_weight": 11.041}}, {"seq": 4, "kind": "diagnose_round_0", "ts": 1781846402.9566727, "hash": "571010a701571210", "prev": "072f7a9122fa4930", "body": [{"cause": "Nozzle clog", "confidence": 0.87}, {"cause": "Viscosity (new lot)", "confidence": 0.13}, {"cause": "Pump wear", "confidence": 0.0}]}, {"seq": 5, "kind": "verify", "ts": 1781846402.9960394, "hash": "ae06f72b217f15c0", "prev": "571010a701571210", "body": {"grounded": false, "citation_resolution_rate": 0.857, "hallucinated_parts": [], "refutations": ["Step 7: citation 'MANUAL:Acme_Model_8200.md#7.4@p.212' does NOT resolve to a real manual passage \u2014 blocked."], "verifier_model": "mock-verify", "passed": false}}, {"seq": 6, "kind": "verify_retry", "ts": 1781846403.0312421, "hash": "fe3b0c12d8dfb9c5", "prev": "ae06f72b217f15c0", "body": {"grounded": true, "citation_resolution_rate": 1.0, "hallucinated_parts": [], "refutations": [], "verifier_model": "mock-verify", "passed": true}}, {"seq": 7, "kind": "safety_precheck", "ts": 1781846403.039691, "hash": "8cc83dee1a752701", "prev": "fe3b0c12d8dfb9c5", "body": {"loto_present": true, "contradicts_safety_section": false, "missing_permits": [], "passed": true, "notes": ["HOT-PRODUCT permit may be required (temp-dependent).", "LOTO present, no safety-section contradiction, permits accounted for."]}}, {"seq": 8, "kind": "gate", "ts": 1781846403.0406342, "hash": "a747bda193fa1f0e", "prev": "8cc83dee1a752701", "body": {"risk_class": "LOTO_PHYSICAL", "approver_role": "maintenance_lead", "approver_identity": "maint.lead.kpatel", "e_sign": true, "outcome": "APPROVED", "rationale": "maintenance_lead (maint.lead.kpatel) -> APPROVED", "required_confidence": 0.42, "actual_confidence": 0.87}}, {"seq": 9, "kind": "it_action", "ts": 1781846403.1303596, "hash": "166e4dda8af0ce90", "prev": "a747bda193fa1f0e", "body": {"system": "CMMS", "action": "create_work_order", "idempotency_key": "335ac6c1478f", "created": true, "record": {"wo_id": "WO-AUTO-335ac6c1478f", "funcloc": "FL-PKG-03-FILL", "status": "DRAFT", "cause": "Nozzle clog", "iso14224": "1.2.1", "est_minutes": 45, "steps": ["Apply lockout-tagout per plant LOTO-FILL-03.", "Relieve line pressure.", "Remove and inspect nozzle assembly.", "Replace with nozzle kit 8200-NZ if scored or clogged.", "Flush feed line.", "Reinstall, remove LOTO, run CIP, verify flow 36-40 L/min."]}}}, {"seq": 10, "kind": "it_action", "ts": 1781846403.1304638, "hash": "816d02f623cec0fc", "prev": "166e4dda8af0ce90", "body": {"system": "ERP", "action": "reserve_parts", "idempotency_key": "e3b7487eb3ee", "created": true, "record": {"reservation_id": "RES-e3b7487eb3ee", "lines": [{"part_no": "8200-NZ", "qty": 1}], "status": "RESERVED"}}}, {"seq": 11, "kind": "it_action", "ts": 1781846403.1304889, "hash": "1b07dbe4a75cc3b5", "prev": "816d02f623cec0fc", "body": {"system": "QMS", "action": "create_qc_plan", "idempotency_key": "64e98d1fc386", "created": true, "record": {"plan_id": "QCP-64e98d1fc386", "funcloc": "FL-PKG-03-FILL", "sampling": "AQL 2.5, 5 units post-restart, check fill volume"}}}, {"seq": 12, "kind": "it_action", "ts": 1781846403.1305063, "hash": "6577e2d0e3990804", "prev": "1b07dbe4a75cc3b5", "body": {"system": "NOTIFY", "action": "notify", "idempotency_key": "025165b0c9a2", "created": true, "record": {"to": "jmartin", "message": "WO WO-AUTO-335ac6c1478f assigned: Nozzle clog", "status": "SENT"}}}, {"seq": 13, "kind": "monitor", "ts": 1781846403.1305296, "hash": "0ef98961744c6917", "prev": "6577e2d0e3990804", "body": {"fix_confirmed": true, "flow_restored_Lmin": 38.4, "note": "post-CIP flow back in 36-40 band per manual acceptance"}}, {"seq": 14, "kind": "learn", "ts": 1781846403.1306756, "hash": "6dfc66bc44546d6b", "prev": "0ef98961744c6917", "body": {"asset": "FL-PKG-03-FILL", "alarm": "A-220", "cause": "Nozzle clog", "iso": "1.2.1", "fix": "CIP flush + nozzle kit 8200-NZ per Manual 8200 \u00a77.4", "validated": true, "confidence": 0.87, "source_run": "INC-56783ec3"}}], "router_usage": {"total_calls": 6, "total_tokens": 558, "total_cost_usd": 0.0, "by_problem_type": {"DEEP_DIAGNOSIS": {"calls": 1, "tokens": 184, "cost": 0.0}, "PLANNING": {"calls": 2, "tokens": 124, "cost": 0.0}, "VERIFICATION": {"calls": 2, "tokens": 116, "cost": 0.0}, "KNOWLEDGE": {"calls": 1, "tokens": 134, "cost": 0.0}}, "providers_used": ["mock"]}, "evidence_summary": {"n_items": 19, "n_contradictions": 0, "sources": ["ASSET_REGISTRY", "CMMS", "HISTORIAN", "MANUAL", "MES", "MOC", "PARTS", "SAFETY", "SHIFT_NOTES"], "total_weight": 11.041}, "trace": ["fast_path: preliminary cause 'Nozzle clog' from alarm+manual", "manual_sop: grounded via RAG -> MANUAL:Acme_Model_8200.md#7.4@p.143 (score 0.6)", "hypothesis: ranked [('Nozzle clog', 0.87), ('Viscosity (new lot)', 0.13), ('Pump wear', 0.0)]", "planner: 7 steps, risk LOTO_PHYSICAL, parts ['8200-NZ']", "verifier: REFUTED -> [\"Step 7: citation 'MANUAL:Acme_Model_8200.md#7.4@p.212' does NOT resolve to a real manual passage \u2014 blocked.\"]; re-planning (inner loop)", "planner: 6 steps, risk LOTO_PHYSICAL, parts ['8200-NZ']"], "escalation": null, "framework": "langgraph", "it_actions": [{"system": "CMMS", "action": "create_work_order", "idempotency_key": "335ac6c1478f", "created": true, "record": {"wo_id": "WO-AUTO-335ac6c1478f", "funcloc": "FL-PKG-03-FILL", "status": "DRAFT", "cause": "Nozzle clog", "iso14224": "1.2.1", "est_minutes": 45, "steps": ["Apply lockout-tagout per plant LOTO-FILL-03.", "Relieve line pressure.", "Remove and inspect nozzle assembly.", "Replace with nozzle kit 8200-NZ if scored or clogged.", "Flush feed line.", "Reinstall, remove LOTO, run CIP, verify flow 36-40 L/min."]}}, {"system": "ERP", "action": "reserve_parts", "idempotency_key": "e3b7487eb3ee", "created": true, "record": {"reservation_id": "RES-e3b7487eb3ee", "lines": [{"part_no": "8200-NZ", "qty": 1}], "status": "RESERVED"}}, {"system": "QMS", "action": "create_qc_plan", "idempotency_key": "64e98d1fc386", "created": true, "record": {"plan_id": "QCP-64e98d1fc386", "funcloc": "FL-PKG-03-FILL", "sampling": "AQL 2.5, 5 units post-restart, check fill volume"}}, {"system": "NOTIFY", "action": "notify", "idempotency_key": "025165b0c9a2", "created": true, "record": {"to": "jmartin", "message": "WO WO-AUTO-335ac6c1478f assigned: Nozzle clog", "status": "SENT"}}], "verifier": {"grounded": true, "citation_resolution_rate": 1.0, "hallucinated_parts": [], "refutations": [], "verifier_model": "mock-verify", "passed": true}, "safety": {"loto_present": true, "contradicts_safety_section": false, "missing_permits": [], "passed": true, "notes": ["HOT-PRODUCT permit may be required (temp-dependent).", "LOTO present, no safety-section contradiction, permits accounted for."]}};
+load(JSON.stringify(EMBEDDED));
+</script></body></html>

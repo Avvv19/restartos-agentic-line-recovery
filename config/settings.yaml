@@ -1,0 +1,10 @@
+# RestartOS runtime settings
+data_root: _data
+it_state_dir: _it_state
+budget:
+  max_calls: 60
+  max_cost_usd: 2.50
+  max_wall_clock_s: 600
+diagnosis:
+  abstain_threshold: 0.55        # tau: below this -> escalate. Downstream guards (verifier + safety + human gate) backstop borderline calls.
+  contradiction_blocks: true

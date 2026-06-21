@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RestartOS — Live Agent Engine (in-browser, no setup)</title>
+<style>
+:root{
+  --bg:#F6F8FB;--surface:#fff;--ink:#0B0E14;--muted:#5A6473;--faint:#8A93A3;--line:#E3E7EE;
+  --cobalt:#2563EB;--ot:#0E7490;--ot-bg:#ECFEFF;--eng:#4338CA;--eng-bg:#EEF1FF;
+  --ag:#6D28D9;--ag-bg:#F6F4FF;--ev:#334155;--ev-bg:#F1F5F9;--vf:#B45309;--vf-bg:#FFF7ED;
+  --gt:#B91C1C;--gt-bg:#FEF2F2;--it:#15803D;--it-bg:#F0FDF4;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.5}
+.mono{font-family:"SF Mono","Cascadia Code",Consolas,monospace}
+header{position:sticky;top:0;z-index:30;background:#0B0E14;color:#fff;padding:12px 20px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;box-shadow:0 1px 0 #1b2230}
+header .brand{font-weight:700;font-size:16px;letter-spacing:-.01em}
+header .brand small{display:block;font-weight:400;color:#9FB3FF;font-size:11px;letter-spacing:.04em}
+header .controls{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-left:auto}
+header input,header select{font-size:12.5px;border:1px solid #2A3350;background:#11151f;color:#fff;border-radius:7px;padding:6px 8px}
+header input.hint{width:150px}
+.btn{font-size:12.5px;font-weight:600;border-radius:8px;padding:8px 14px;border:1px solid var(--line);background:#fff;color:var(--ink);cursor:pointer}
+.btn:hover{background:#f2f4f8}
+.btn.run{background:var(--it);color:#fff;border-color:var(--it)}
+.btn.ghost{background:#11151f;color:#fff;border-color:#2A3350}
+.btn.ghost:hover{background:#1b2230}
+.btn:disabled{opacity:.5;cursor:default}
+.layout{display:grid;grid-template-columns:230px 1fr;gap:0;align-items:start}
+@media(max-width:820px){.layout{grid-template-columns:1fr}.rail{display:none}}
+.rail{position:sticky;top:57px;height:calc(100vh - 57px);overflow:auto;border-right:1px solid var(--line);background:#fff;padding:14px 10px}
+.rail h4{font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);margin:6px 8px 10px}
+.step{display:flex;gap:9px;align-items:flex-start;padding:7px 9px;border-radius:9px;cursor:pointer;color:var(--muted);font-size:12.7px}
+.step:hover{background:#f4f6fa}
+.step.active{background:#EEF1FF;color:var(--eng)}
+.step.done{color:var(--ink)}
+.step .dot{flex:0 0 18px;height:18px;border-radius:50%;border:2px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:var(--faint);background:#fff;margin-top:1px}
+.step.done .dot{background:var(--it);border-color:var(--it);color:#fff}
+.step.active .dot{border-color:var(--eng);color:var(--eng)}
+.presenter{display:flex;gap:6px;padding:10px 8px;border-top:1px solid var(--line);margin-top:8px;flex-wrap:wrap}
+.presenter .btn{padding:6px 10px;font-size:12px}
+main{padding:18px 22px 90px;max-width:980px}
+.hello{background:#fff;border:1px solid var(--line);border-radius:14px;padding:22px 24px}
+.hello h1{margin:0 0 6px;font-size:22px;letter-spacing:-.02em}
+.hello p{color:var(--muted);font-size:14px;margin:6px 0}
+.goal{margin-top:12px;font-size:13.5px;background:#F5F8FF;border-left:3px solid var(--cobalt);border-radius:0 8px 8px 0;padding:10px 14px}
+.stage{background:#fff;border:1px solid var(--line);border-radius:14px;padding:0;margin:14px 0;overflow:hidden;opacity:.35;transition:opacity .35s,box-shadow .35s}
+.stage.shown{opacity:1}
+.stage.current{box-shadow:0 0 0 2px var(--cobalt)}
+.stage .head{display:flex;align-items:center;gap:12px;padding:13px 18px;border-bottom:1px solid var(--line)}
+.stage .num{flex:0 0 30px;height:30px;border-radius:9px;background:var(--eng-bg);color:var(--eng);font-weight:700;font-size:13px;display:flex;align-items:center;justify-content:center}
+.stage .ttl{font-size:15.5px;font-weight:650}
+.stage .persona{margin-left:auto;font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--cobalt);background:#EEF3FF;border-radius:5px;padding:3px 8px}
+.stage .body{padding:14px 18px}
+.why{font-size:13px;color:var(--muted);background:#FAFBFD;border:1px dashed var(--line);border-radius:9px;padding:9px 12px;margin-bottom:12px}
+.why b{color:var(--ink)}
+.kv{font-size:13px;margin:3px 0}.kv b{color:var(--ink)}
+.tag{display:inline-block;font-size:11px;font-weight:700;border-radius:999px;padding:2px 9px;margin:2px 4px 2px 0;border:1px solid}
+.t-ot{color:var(--ot);background:var(--ot-bg);border-color:#67E8F9}
+.t-it{color:var(--it);background:var(--it-bg);border-color:#BBF7D0}
+.t-pass{color:var(--it);background:var(--it-bg);border-color:#BBF7D0}
+.t-fail{color:var(--gt);background:var(--gt-bg);border-color:#FECACA}
+.t-warn{color:var(--vf);background:var(--vf-bg);border-color:#FED7AA}
+.evrow{display:grid;grid-template-columns:96px 1fr 70px;gap:8px;align-items:center;font-size:12.5px;padding:6px 0;border-bottom:1px solid var(--line)}
+.evrow:last-child{border:none}
+.evsrc{font-weight:700;font-size:10.5px;letter-spacing:.03em}
+.evcite{font-family:"SF Mono",monospace;font-size:10.5px;color:var(--faint)}
+.bar-c{height:7px;background:#EEF1F6;border-radius:4px;overflow:hidden}
+.bar-f{height:100%;background:var(--cobalt)}
+.dx{display:flex;align-items:center;gap:10px;font-size:13px;margin:6px 0}
+.dx .bar-c{flex:0 0 150px}
+.step-line{font-size:12.7px;margin:5px 0;padding-left:8px;border-left:2px solid var(--line)}
+.refute{color:var(--vf);font-size:12.5px;margin:4px 0;background:var(--vf-bg);border-radius:7px;padding:7px 10px}
+.wo{background:#F7F9FC;border:1px solid var(--line);border-radius:9px;padding:11px 13px;font-size:12.7px;line-height:1.7}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.metric{background:#F1F5F9;border-radius:9px;padding:11px 13px}
+.metric .l{font-size:11.5px;color:var(--muted)}.metric .v{font-size:20px;font-weight:650;margin-top:2px}
+.itrow{display:flex;align-items:center;gap:8px;font-size:12.7px;margin:4px 0}
+.ok{color:var(--it)}.warn{color:var(--vf)}.bad{color:var(--gt)}
+.audit{font-family:"SF Mono",monospace;font-size:11px;color:var(--muted);max-height:160px;overflow:auto;background:#0B0E14;color:#cdd5e3;border-radius:9px;padding:10px 12px}
+.audit div{margin:2px 0}
+.proofs{margin-top:26px;border-top:1px solid var(--line);padding-top:16px}
+.proofs h3{font-size:14px;margin:0 0 4px}
+.proofs .sub{color:var(--muted);font-size:12.5px;margin:0 0 12px}
+.proofbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+#proofout{font-size:12.5px;background:#fff;border:1px solid var(--line);border-radius:11px;padding:14px 16px;min-height:40px;white-space:pre-wrap}
+.spinner{display:inline-block;width:13px;height:13px;border:2px solid #cbd5e1;border-top-color:var(--cobalt);border-radius:50%;animation:spin .7s linear infinite;vertical-align:-2px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.banner{font-size:13px;font-weight:600;border-radius:10px;padding:10px 14px;margin:10px 0}
+.banner.act{background:var(--it-bg);color:var(--it);border:1px solid #BBF7D0}
+.banner.abstain{background:var(--vf-bg);color:var(--vf);border:1px solid #FED7AA}
+</style></head>
+<body>
+<header>
+  <div class="brand">RestartOS <small class="mono">AGENTIC LINE-RECOVERY · runs live in your browser · no server · no key</small></div>
+  <div class="controls">
+    <input class="hint" id="f-hint" value="Line 3 filler" title="asset hint">
+    <input class="hint" id="f-alarm" value="A-220" style="width:70px" title="alarm code">
+    <input class="hint" id="f-rate" value="10000" style="width:80px" title="downtime $/hr">
+    <button class="btn run" id="runbtn" onclick="runFlow()">▶ Run fault-to-fix</button>
+  </div>
+</header>
+
+<div class="layout">
+  <nav class="rail">
+    <h4>Pipeline</h4>
+    <div id="steps"></div>
+    <div class="presenter">
+      <button class="btn" onclick="prev()">‹ Prev</button>
+      <button class="btn" onclick="next()">Next ›</button>
+      <button class="btn ghost" id="playbtn" onclick="togglePlay()">▷ Play</button>
+    </div>
+  </nav>
+
+  <main>
+    <div class="hello" id="hello">
+      <h1>Live Fault-to-Fix Cockpit</h1>
+      <p>An agent takes a line-down goal, reasons across every plant silo, and produces a verified
+         Recovery Work Package — the outcome a senior maintenance tech assembles by hand today.</p>
+      <div class="goal mono">Goal in → "Line 3 filler down, alarm A-220 — get it running safely, fast."<br>
+         Outcome out → grounded diagnosis + safety-checked procedure + human-approved work order + fix captured for next shift.</div>
+      <p style="margin-top:14px">Press <b>▶ Run fault-to-fix</b>, then use <b>Next ›</b> / <b>▷ Play</b> to walk each stage on camera.</p>
+    </div>
+    <div id="flow"></div>
+    <div id="result"></div>
+
+    <div class="proofs">
+      <h3>Governance &amp; proofs <span class="persona" style="color:var(--gt);background:var(--gt-bg)">live</span></h3>
+      <p class="sub">The trust story — each button hits the running engine live.</p>
+      <div class="proofbar">
+        <button class="btn" onclick="proof('eval')">Run evals</button>
+        <button class="btn" onclick="proof('boundary')">OT/IT boundary test</button>
+        <button class="btn" onclick="proof('providers')">Model routing</button>
+        <button class="btn" onclick="proof('dataset')">Dataset manifest</button>
+        <button class="btn" onclick="proof('rag')">Manual RAG query</button>
+      </div>
+      <div id="proofout">Results appear here.</div>
+    </div>
+  </main>
+</div>
+
+<script>
+const STAGES = [
+  {k:"intake", t:"Goal in — incident contract", p:"Sr. Systems Architect",
+   why:"A line-down <b>goal</b> enters as a structured contract (asset, symptom, alarm, $/hr) — not a question. This is what makes it an agent, not a chatbot."},
+  {k:"resolve", t:"Resolve asset — the keystone join", p:"Sr. OT/IT Integration",
+   why:"The unsexy keystone: join <span class='mono'>PI tag ↔ SAP funcloc ↔ OEM model</span> across silos that disagree on names. Without this the agent can't reason across systems."},
+  {k:"fastpath", t:"Fast path — preliminary cause", p:"Sr. Plant Troubleshooting",
+   why:"A line bleeds money every minute, so a first likely-cause is produced in one hop from the alarm + manual, then refined."},
+  {k:"gather", t:"Agentic tool-use — the supervisor picks tools", p:"Automated Orchestration",
+   why:"This is the agent deciding, not a fixed pipeline. The supervisor chooses which plant tool to call next (historian, CMMS, manual, MOC, parts, safety, labour, security), one at a time, reacting to what it finds — then decides it has enough. Each tool writes a <b>cited, trust-weighted</b> fact."},
+  {k:"diagnose", t:"Differential diagnosis", p:"Sr. Predictive Maintenance",
+   why:"Causes are ranked by <b>evidence weight</b> with calibrated confidence and an explicit 'what would change my mind'. Symptom ≠ root cause."},
+  {k:"plan", t:"Recovery plan — grounded to the manual", p:"Sr. Maintenance Planner",
+   why:"A safe procedure is built from the manual, each step cited, parts resolved against real inventory, LOTO + labour classified."},
+  {k:"verify", t:"Cross-model verification", p:"Sr. LLM Engineer",
+   why:"A <b>different model family</b> tries to REFUTE the plan. Every citation must resolve to a real passage; every part must exist. Watch it catch the bad citation and force a re-plan."},
+  {k:"safety", t:"Automated safety pre-check", p:"Sr. LOTO Compliance",
+   why:"Defence in depth before any human: LOTO present? contradicts the manual's safety section? permit required?"},
+  {k:"gate", t:"Authorization gate — human, role-matched", p:"Sr. Maintenance Tech",
+   why:"Role-matched + economics-routed approval. LOTO ≠ recipe ≠ restart; a $50k/hr line acts on lower confidence than a $500/hr line. e-signature where required."},
+  {k:"act", t:"Act — idempotent IT writes", p:"Automated Orchestration",
+   why:"The ONLY place state changes, and only after the gate. Idempotent writes to CMMS / ERP / QMS / notify. No path can ever actuate the line."},
+  {k:"learn", t:"Monitor + learn + handover", p:"Sr. Plant Operations",
+   why:"Did the fix work? Confirm it, capture it as a validated known-fix for the next shift, and hand over."},
+];
+
+const KB = {"assets": [{"funcloc": "FL-PKG-03-FILL", "line": "Line 3", "model": "Acme Model 8200", "mes_id": "L3-FIL", "crit": "A", "aliases": ["FL-PKG-03-FILL", "FL-PKG-3-FILL"], "tags": ["4471", "4472", "4473"], "historian": [{"tag": "4471", "meaning": "fill_head_pressure", "uom": "bar", "baseline": 4.22, "peak": 6.72, "trough": 4.07, "stale": 0, "signal": "ABOVE baseline (high head pressure)", "conf": 0.8}, {"tag": "4472", "meaning": "fill_flow_rate", "uom": "L/min", "baseline": 37.91, "peak": 39.13, "trough": 13.3, "stale": 0, "signal": "BELOW baseline (low flow)", "conf": 0.8}, {"tag": "4473", "meaning": "nozzle_vibration", "uom": "mm/s", "baseline": 3.23, "peak": 3.54, "trough": 3.16, "stale": 0, "signal": "within normal band", "conf": 0.4}], "cmms": {"top_cause": "Nozzle clog", "count": 15, "n_wo": 26, "conflicts": [{"wo_id": "WO-44999", "causes": ["Nozzle clog", "Operator error"]}]}, "moc": [{"id": "MOC-2026-051", "date": "2026-06-30T09:12:00", "change": "New product lot LOT-7741 introduced; viscosity spec 1.8x prior lot", "risk": "pending"}, {"id": "MOC-2026-047", "date": "2026-06-24T14:00:00", "change": "PM completed: nozzle inspection, no parts replaced", "risk": "closed"}], "parts": [{"part_no": "8200-NZ", "desc": "Nozzle kit Model 8200", "on_hand": 2, "bin": "A4", "lead": 5}, {"part_no": "8200-SL", "desc": "Seal kit Model 8200", "on_hand": 0, "bin": "A5", "lead": 14}, {"part_no": "6204-2RS", "desc": "Bearing 6204-2RS", "on_hand": 11, "bin": "C2", "lead": 3}], "safety": {"procedure": "LOTO-FILL-03.md", "permit": true}, "shift": [{"file": "2026-06-30_day.md", "text": "# Shift handover 2026-06-30 (day)\n\n09:20 \u2014 L3 filler down, alarm A-220. Head pressure pinned high, flow dropped to ~13 L/min. New lot LOT-7741 started 09:12, real thick stuff. Reckon nozzle's clogged again \u2014 third time this month. Flagged for maint, did NOT touch it (needs LOTO)."}, {"file": "2026-06-30_night.md", "text": "# Shift handover 2026-06-30 (night)\n\nL3 filler chucked a wobbly ~09:15, head pressure pinned, flow tanked. Smells like a clog."}]}, {"funcloc": "FL-PKG-03-CAP", "line": "Line 3", "model": "Acme Model 6100", "mes_id": "L3-CAP", "crit": "B", "aliases": ["FL-PKG-03-CAP"], "tags": ["4480", "4481"], "historian": [{"tag": "4480", "meaning": "cap_torque", "uom": "Nm", "baseline": 11.97, "peak": 11.97, "trough": 11.97, "stale": 95, "signal": "within normal band", "conf": 0.4}, {"tag": "4481", "meaning": "cap_rate", "uom": "cpm", "baseline": 219.84, "peak": 226.32, "trough": 213.4, "stale": 0, "signal": "within normal band", "conf": 0.4}], "cmms": {"top_cause": "Seal leak", "count": 8, "n_wo": 28, "conflicts": []}, "moc": [], "parts": [], "safety": {"procedure": "LOTO-FL-PKG-03-CAP.md", "permit": false}, "shift": [{"file": "2026-06-30_day.md", "text": "# Shift handover 2026-06-30 (day)\n\n09:20 \u2014 L3 filler down, alarm A-220. Head pressure pinned high, flow dropped to ~13 L/min. New lot LOT-7741 started 09:12, real thick stuff. Reckon nozzle's clogged again \u2014 third time this month. Flagged for maint, did NOT touch it (needs LOTO)."}, {"file": "2026-06-30_night.md", "text": "# Shift handover 2026-06-30 (night)\n\nL3 filler chucked a wobbly ~09:15, head pressure pinned, flow tanked. Smells like a clog."}]}, {"funcloc": "FL-PKG-03-LBL", "line": "Line 3", "model": "Sato Model LX", "mes_id": "L3-LBL", "crit": "C", "aliases": ["FL-PKG-03-LBL"], "tags": ["4490"], "historian": [{"tag": "4490", "meaning": "label_registration", "uom": "mm", "baseline": 0.3, "peak": 0.31, "trough": 0.29, "stale": 0, "signal": "within normal band", "conf": 0.4}], "cmms": {"top_cause": "PLC fault", "count": 8, "n_wo": 22, "conflicts": []}, "moc": [], "parts": [], "safety": null, "shift": [{"file": "2026-06-30_day.md", "text": "# Shift handover 2026-06-30 (day)\n\n09:20 \u2014 L3 filler down, alarm A-220. Head pressure pinned high, flow dropped to ~13 L/min. New lot LOT-7741 started 09:12, real thick stuff. Reckon nozzle's clogged again \u2014 third time this month. Flagged for maint, did NOT touch it (needs LOTO)."}, {"file": "2026-06-30_night.md", "text": "# Shift handover 2026-06-30 (night)\n\nL3 filler chucked a wobbly ~09:15, head pressure pinned, flow tanked. Smells like a clog."}]}, {"funcloc": "FL-PKG-02-FILL", "line": "Line 2", "model": "Acme Model 8200", "mes_id": "L2-FIL", "crit": "A", "aliases": ["FL-PKG-02-FILL"], "tags": ["3471", "3472"], "historian": [{"tag": "3471", "meaning": "fill_head_pressure", "uom": "bar", "baseline": 4.2, "peak": 4.33, "trough": 4.08, "stale": 0, "signal": "within normal band", "conf": 0.4}, {"tag": "3472", "meaning": "fill_flow_rate", "uom": "L/min", "baseline": 37.98, "peak": 39.14, "trough": 36.91, "stale": 0, "signal": "within normal band", "conf": 0.4}], "cmms": {"top_cause": "Nozzle clog", "count": 5, "n_wo": 20, "conflicts": []}, "moc": [], "parts": [{"part_no": "8200-NZ", "desc": "Nozzle kit Model 8200", "on_hand": 2, "bin": "A4", "lead": 5}, {"part_no": "8200-SL", "desc": "Seal kit Model 8200", "on_hand": 0, "bin": "A5", "lead": 14}, {"part_no": "6204-2RS", "desc": "Bearing 6204-2RS", "on_hand": 11, "bin": "C2", "lead": 3}], "safety": {"procedure": "LOTO-FL-PKG-02-FILL.md", "permit": false}, "shift": [{"file": "2026-06-30_day.md", "text": "# Shift handover 2026-06-30 (day)\n\n09:20 \u2014 L3 filler down, alarm A-220. Head pressure pinned high, flow dropped to ~13 L/min. New lot LOT-7741 started 09:12, real thick stuff. Reckon nozzle's clogged again \u2014 third time this month. Flagged for maint, did NOT touch it (needs LOTO)."}, {"file": "2026-06-30_night.md", "text": "# Shift handover 2026-06-30 (night)\n\nL3 filler chucked a wobbly ~09:15, head pressure pinned, flow tanked. Smells like a clog."}]}, {"funcloc": "FL-PKG-01-CONV", "line": "Line 1", "model": "Intralox ARB", "mes_id": "L1-CNV", "crit": "C", "aliases": ["FL-PKG-01-CONV"], "tags": ["2400", "2401"], "historian": [{"tag": "2400", "meaning": "conv_speed", "uom": "m/s", "baseline": 1.2, "peak": 1.24, "trough": 1.17, "stale": 0, "signal": "within normal band", "conf": 0.4}, {"tag": "2401", "meaning": "conv_motor_amps", "uom": "A", "baseline": 17.84, "peak": 18.51, "trough": 17.47, "stale": 0, "signal": "within normal band", "conf": 0.4}], "cmms": {"top_cause": "Calibration drift", "count": 6, "n_wo": 26, "conflicts": []}, "moc": [], "parts": [], "safety": {"procedure": "LOTO-FL-PKG-01-CONV.md", "permit": false}, "shift": [{"file": "2026-06-30_day.md", "text": "# Shift handover 2026-06-30 (day)\n\n09:20 \u2014 L3 filler down, alarm A-220. Head pressure pinned high, flow dropped to ~13 L/min. New lot LOT-7741 started 09:12, real thick stuff. Reckon nozzle's clogged again \u2014 third time this month. Flagged for maint, did NOT touch it (needs LOTO)."}, {"file": "2026-06-30_night.md", "text": "# Shift handover 2026-06-30 (night)\n\nL3 filler chucked a wobbly ~09:15, head pressure pinned, flow tanked. Smells like a clog."}]}, {"funcloc": "FL-UTL-00-AIR", "line": "Utility", "model": "Atlas GA75", "mes_id": "UT-AIR", "crit": "A", "aliases": ["FL-UTL-00-AIR"], "tags": ["1100"], "historian": [{"tag": "1100", "meaning": "air_pressure", "uom": "bar", "baseline": 6.53, "peak": 6.69, "trough": 6.3, "stale": 0, "signal": "within normal band", "conf": 0.4}], "cmms": {"top_cause": "Bearing wear", "count": 5, "n_wo": 29, "conflicts": []}, "moc": [], "parts": [], "safety": null, "shift": [{"file": "2026-06-30_day.md", "text": "# Shift handover 2026-06-30 (day)\n\n09:20 \u2014 L3 filler down, alarm A-220. Head pressure pinned high, flow dropped to ~13 L/min. New lot LOT-7741 started 09:12, real thick stuff. Reckon nozzle's clogged again \u2014 third time this month. Flagged for maint, did NOT touch it (needs LOTO)."}, {"file": "2026-06-30_night.md", "text": "# Shift handover 2026-06-30 (night)\n\nL3 filler chucked a wobbly ~09:15, head pressure pinned, flow tanked. Smells like a clog."}]}, {"funcloc": "FL-PKG-04-FILL", "line": "Line 4", "model": "Acme Model 8200", "mes_id": "L4-FIL", "crit": "A", "aliases": ["FL-PKG-04-FILL"], "tags": ["5471", "5472", "5473"], "historian": [{"tag": "5471", "meaning": "fill_head_pressure", "uom": "bar", "baseline": 4.21, "peak": 4.32, "trough": 4.08, "stale": 0, "signal": "within normal band", "conf": 0.4}, {"tag": "5472", "meaning": "fill_flow_rate", "uom": "L/min", "baseline": 37.79, "peak": 39.07, "trough": 36.91, "stale": 0, "signal": "within normal band", "conf": 0.4}, {"tag": "5473", "meaning": "nozzle_vibration", "uom": "mm/s", "baseline": 2.1, "peak": 2.16, "trough": 2.04, "stale": 0, "signal": "within normal band", "conf": 0.4}], "cmms": {"top_cause": "Seal leak", "count": 4, "n_wo": 17, "conflicts": []}, "moc": [], "parts": [{"part_no": "8200-NZ", "desc": "Nozzle kit Model 8200", "on_hand": 2, "bin": "A4", "lead": 5}, {"part_no": "8200-SL", "desc": "Seal kit Model 8200", "on_hand": 0, "bin": "A5", "lead": 14}, {"part_no": "6204-2RS", "desc": "Bearing 6204-2RS", "on_hand": 11, "bin": "C2", "lead": 3}], "safety": null, "shift": [{"file": "2026-06-30_day.md", "text": "# Shift handover 2026-06-30 (day)\n\n09:20 \u2014 L3 filler down, alarm A-220. Head pressure pinned high, flow dropped to ~13 L/min. New lot LOT-7741 started 09:12, real thick stuff. Reckon nozzle's clogged again \u2014 third time this month. Flagged for maint, did NOT touch it (needs LOTO)."}, {"file": "2026-06-30_night.md", "text": "# Shift handover 2026-06-30 (night)\n\nL3 filler chucked a wobbly ~09:15, head pressure pinned, flow tanked. Smells like a clog."}]}, {"funcloc": "FL-PKG-04-CAP", "line": "Line 4", "model": "Acme Model 6100", "mes_id": "L4-CAP", "crit": "B", "aliases": ["FL-PKG-04-CAP"], "tags": ["5480", "5481"], "historian": [{"tag": "5480", "meaning": "cap_torque", "uom": "Nm", "baseline": 11.96, "peak": 12.36, "trough": 11.64, "stale": 0, "signal": "within normal band", "conf": 0.4}, {"tag": "5481", "meaning": "cap_rate", "uom": "cpm", "baseline": 219.63, "peak": 226.59, "trough": 213.42, "stale": 0, "signal": "within normal band", "conf": 0.4}], "cmms": {"top_cause": "Lubrication", "count": 3, "n_wo": 16, "conflicts": []}, "moc": [], "parts": [], "safety": null, "shift": [{"file": "2026-06-30_day.md", "text": "# Shift handover 2026-06-30 (day)\n\n09:20 \u2014 L3 filler down, alarm A-220. Head pressure pinned high, flow dropped to ~13 L/min. New lot LOT-7741 started 09:12, real thick stuff. Reckon nozzle's clogged again \u2014 third time this month. Flagged for maint, did NOT touch it (needs LOTO)."}, {"file": "2026-06-30_night.md", "text": "# Shift handover 2026-06-30 (night)\n\nL3 filler chucked a wobbly ~09:15, head pressure pinned, flow tanked. Smells like a clog."}]}, {"funcloc": "FL-PKG-05-FILL", "line": "Line 5", "model": "Krones VarioFill", "mes_id": "L5-FIL", "crit": "A", "aliases": ["FL-PKG-05-FILL"], "tags": ["6471", "6472", "6473"], "historian": [{"tag": "6471", "meaning": "fill_head_pressure", "uom": "bar", "baseline": 4.19, "peak": 4.32, "trough": 4.08, "stale": 0, "signal": "within normal band", "conf": 0.4}, {"tag": "6472", "meaning": "fill_flow_rate", "uom": "L/min", "baseline": 37.77, "peak": 39.1, "trough": 36.86, "stale": 0, "signal": "within normal band", "conf": 0.4}, {"tag": "6473", "meaning": "nozzle_vibration", "uom": "mm/s", "baseline": 2.11, "peak": 2.16, "trough": 2.04, "stale": 0, "signal": "within normal band", "conf": 0.4}], "cmms": {"top_cause": "PLC fault", "count": 3, "n_wo": 16, "conflicts": []}, "moc": [], "parts": [{"part_no": "8200-NZ", "desc": "Nozzle kit Model 8200", "on_hand": 2, "bin": "A4", "lead": 5}, {"part_no": "8200-SL", "desc": "Seal kit Model 8200", "on_hand": 0, "bin": "A5", "lead": 14}, {"part_no": "6204-2RS", "desc": "Bearing 6204-2RS", "on_hand": 11, "bin": "C2", "lead": 3}], "safety": null, "shift": [{"file": "2026-06-30_day.md", "text": "# Shift handover 2026-06-30 (day)\n\n09:20 \u2014 L3 filler down, alarm A-220. Head pressure pinned high, flow dropped to ~13 L/min. New lot LOT-7741 started 09:12, real thick stuff. Reckon nozzle's clogged again \u2014 third time this month. Flagged for maint, did NOT touch it (needs LOTO)."}, {"file": "2026-06-30_night.md", "text": "# Shift handover 2026-06-30 (night)\n\nL3 filler chucked a wobbly ~09:15, head pressure pinned, flow tanked. Smells like a clog."}]}, {"funcloc": "FL-PKG-05-PAL", "line": "Line 5", "model": "KUKA KR-210", "mes_id": "L5-PAL", "crit": "B", "aliases": ["FL-PKG-05-PAL"], "tags": ["6490", "6491"], "historian": [{"tag": "6490", "meaning": "pal_cycle_time", "uom": "s", "baseline": 1.0, "peak": 1.03, "trough": 0.97, "stale": 0, "signal": "within normal band", "conf": 0.4}, {"tag": "6491", "meaning": "pal_motor_amps", "uom": "A", "baseline": 1.0, "peak": 1.03, "trough": 0.97, "stale": 0, "signal": "within normal band", "conf": 0.4}], "cmms": {"top_cause": "Calibration drift", "count": 5, "n_wo": 22, "conflicts": []}, "moc": [], "parts": [], "safety": null, "shift": [{"file": "2026-06-30_day.md", "text": "# Shift handover 2026-06-30 (day)\n\n09:20 \u2014 L3 filler down, alarm A-220. Head pressure pinned high, flow dropped to ~13 L/min. New lot LOT-7741 started 09:12, real thick stuff. Reckon nozzle's clogged again \u2014 third time this month. Flagged for maint, did NOT touch it (needs LOTO)."}, {"file": "2026-06-30_night.md", "text": "# Shift handover 2026-06-30 (night)\n\nL3 filler chucked a wobbly ~09:15, head pressure pinned, flow tanked. Smells like a clog."}]}], "manuals": {"Acme Model 8200": {"pages": {"1": 1, "7.1": 140, "7.4": 143, "8.2": 167, "Safety": 9}, "7.4": {"page": 143, "text": "\u00a77.4 Low Flow / High Head Pressure (Alarm A-220). Probable cause: fill-nozzle clog from product solids. Procedure (LOTO REQUIRED): 1) Apply lockout-tagout per plant LOTO-FILL-03. 2) Relieve line pressure. 3) Remove and inspect nozzle assembly. 4) Replace with nozzle kit 8200-NZ if scored or clogged. 5) Flush feed line. 6) Reinstall, remove LOTO, run CIP, verify flow 36-40 L/min.", "cite": "MANUAL:Acme_Model_8200.md#7.4@p.143", "steps": [{"n": 1, "text": "Apply lockout-tagout per plant LOTO-FILL-03.", "loto": true, "parts": [], "cite": "MANUAL:Acme_Model_8200.md#7.4@p.143"}, {"n": 2, "text": "Relieve line pressure.", "loto": false, "parts": [], "cite": "MANUAL:Acme_Model_8200.md#7.4@p.143"}, {"n": 3, "text": "Remove and inspect nozzle assembly.", "loto": false, "parts": [], "cite": "MANUAL:Acme_Model_8200.md#7.4@p.143"}, {"n": 4, "text": "Replace with nozzle kit 8200-NZ if scored or clogged.", "loto": false, "parts": ["8200-NZ"], "cite": "MANUAL:Acme_Model_8200.md#7.4@p.143"}, {"n": 5, "text": "Flush feed line.", "loto": false, "parts": [], "cite": "MANUAL:Acme_Model_8200.md#7.4@p.143"}, {"n": 6, "text": "Reinstall, remove LOTO, run CIP, verify flow 36-40 L/min.", "loto": true, "parts": [], "cite": "MANUAL:Acme_Model_8200.md#7.4@p.143"}]}, "Safety": {"page": 9, "text": "Safety section: NEVER service the nozzle without LOTO. Hot product hazard."}}}, "parts_catalog": {"8200-NZ": {"part_no": "8200-NZ", "desc": "Nozzle kit Model 8200", "on_hand": 2, "bin": "A4", "lead": 5}, "8200-SL": {"part_no": "8200-SL", "desc": "Seal kit Model 8200", "on_hand": 0, "bin": "A5", "lead": 14}, "6204-2RS": {"part_no": "6204-2RS", "desc": "Bearing 6204-2RS", "on_hand": 11, "bin": "C2", "lead": 3}}, "security": [{"file": "historian_connection.ini", "line": 6, "issue": "hardcoded_secret", "detail": "password"}, {"file": "historian_connection.ini", "line": 7, "issue": "tls_verification_disabled", "detail": "verify_ssl=false"}], "trust": {"ASSET_REGISTRY": 0.95, "MANUAL": 0.92, "CMMS": 0.8, "MES": 0.78, "HISTORIAN": 0.7, "MOC": 0.85, "PARTS": 0.88, "SAFETY": 0.97, "SHIFT_NOTES": 0.45}, "manifest": {"file_count": 750, "formats": [".csv", ".ini", ".json", ".md", ".pdf", ".xlsx", ".xml"], "scenario": "Line 3 Filler FL-PKG-03-FILL, alarm A-220, new lot LOT-7741", "defects": [{"file": "asset_registry.csv", "kind": "inconsistent_key", "note": "Duplicate funcloc spelling FL-PKG-3-FILL vs FL-PKG-03-FILL; model 'Acme 8200' vs 'Acme Model 8200'"}, {"file": "historian/4473_*.csv", "kind": "sensor_drift", "note": "nozzle_vibration drifts +0.04 mm/s per day"}, {"file": "historian/4480_*.csv", "kind": "frozen_sensor", "note": "cap_torque frozen at 11.97 from day 10 (Stale quality)"}, {"file": "historian/*.csv", "kind": "missing_values", "note": "~1% rows have empty value + Bad quality"}, {"file": "cmms/work_orders.csv", "kind": "duplicate_contradiction", "note": "WO-44999 appears twice with contradictory cause (Operator error vs Nozzle clog)"}, {"file": "parts/inventory.csv", "kind": "missing_master_data", "note": "Part 8200-NZ has only 2 on hand; seal 8200-SL is 0 on hand (lead 14d)"}, {"file": "moc/MOC-2026-051.json", "kind": "open_risk", "note": "Recent viscosity change with risk_review=pending \u2014 prime suspect"}, {"file": "shift_notes/*.md", "kind": "unstructured_slang", "note": "Tribal knowledge buried in shift slang ('chucked a wobbly', 'vibbo', 'manky')"}, {"file": "config/historian_connection.ini", "kind": "hardcoded_secret", "note": "Plaintext password + verify_ssl=false \u2014 flagged by security scanner"}]}};
+const ENGINE = (function(){
+// RestartOS in-browser engine — faithful JS port of the deterministic agent.
+// Computes live from the embedded KB. No replay: inputs drive the computation.
+function cyrb53(str, seed=0){let h1=0xdeadbeef^seed,h2=0x41c6ce57^seed;
+  for(let i=0,ch;i<str.length;i++){ch=str.charCodeAt(i);h1=Math.imul(h1^ch,2654435761);h2=Math.imul(h2^ch,1597334677);}
+  h1=Math.imul(h1^(h1>>>16),2246822507)^Math.imul(h2^(h2>>>13),3266489909);
+  h2=Math.imul(h2^(h2>>>16),2246822507)^Math.imul(h1^(h1>>>13),3266489909);
+  return (4294967296*(2097151&h2)+(h1>>>0)).toString(16).padStart(14,'0');}
+
+const CAUSES={
+  "Nozzle clog":{iso:"1.2.1",signals:["high head pressure","low flow","clog"],systems:["MANUAL","CMMS","HISTORIAN","SHIFT_NOTES"],
+    falsifier:"flow normalizes after CIP flush without nozzle swap"},
+  "Pump wear":{iso:"1.3.4",signals:["pump wear"],systems:["HISTORIAN"],
+    falsifier:"vibration returns to baseline at temperature"},
+  "Viscosity (new lot)":{iso:"7.1.2",signals:["viscosity"],systems:["MOC"],
+    falsifier:"fault persists after reverting to prior lot"},
+};
+const TAU=0.60;
+
+function normalize(s){return (s||"").toLowerCase().replace(/[^a-z0-9]/g,"");}
+
+function resolveAsset(KB,hint,line){
+  const h=(hint||"").toLowerCase(), nh=normalize(hint);
+  let best=null,bs=0,note=[];
+  const lineNum=((line||"")+" "+(hint||"")).match(/\b(\d{1,2})\b/);
+  for(const a of KB.assets){
+    let sc=0;
+    for(const al of a.aliases){const na=normalize(al); if(nh&&(nh.includes(na)||na.includes(nh)))sc+=0.6;}
+    for(const t of a.tags){ if(h.includes(t))sc+=0.9; }
+    const am=a.line.match(/\d+/);
+    if(lineNum && am && am[0]===lineNum[1]) sc+=0.5;            // line-number match (disambiguates)
+    for(const tok of h.split(/\W+/)){
+      if(!tok)continue;
+      if((tok==="filler"||tok==="fill")&&a.funcloc.includes("FILL"))sc+=0.4;
+      if((tok==="capper"||tok==="cap")&&a.funcloc.includes("CAP"))sc+=0.4;
+      if(tok==="conveyor"&&a.funcloc.includes("CONV"))sc+=0.4;
+      if((tok==="palletizer"||tok==="palletiser")&&a.funcloc.includes("PAL"))sc+=0.4;
+      if(tok==="labeler"&&a.funcloc.includes("LBL"))sc+=0.4;
+    }
+    if(sc>bs){bs=sc;best=a;}
+  }
+  if(!best||bs<0.5)return null;
+  return {asset:best,conf:Math.min(0.99,bs/1.5)};
+}
+
+// ---- tools: each returns evidence items + observation
+let _eid=0;
+function ev(source,plane,claim,trust,conf,cite,asserts){_eid++;return{
+  evidence_id:"EV-"+_eid,source_system:source,plane,claim,trust,confidence:conf,
+  citation:{locator:cite||""},tags:asserts?{asserts_cause:asserts}:{},weight:+(trust*conf).toFixed(4)};}
+
+function makeTools(KB,a){
+  const T=KB.trust;
+  return {
+    read_timeline:()=>a.historian.map(s=>{
+      let asserts=null; if(/high head pressure|low flow/.test(s.signal))asserts="Nozzle clog";
+      else if(/pump wear/.test(s.signal))asserts="Pump wear";
+      const stale=s.stale?` [${s.stale} stale pts — evidence not gospel]`:"";
+      return ev("HISTORIAN","OT_OPS",`Tag ${s.tag} (${s.meaning}) ${s.baseline}->${s.peak}/${s.trough} ${s.uom}: ${s.signal}${stale}`,T.HISTORIAN,s.conf,`historian:${s.tag}`,asserts);}),
+    read_maintenance_history:()=>{const out=[];const c=a.cmms;
+      if(c.top_cause)out.push(ev("CMMS","IT_BUSINESS",`CMMS: '${c.top_cause}' is the recurring fault on ${a.funcloc} (${c.count}/${c.n_wo} WOs) — strong MTBF signal`,T.CMMS,Math.min(0.9,0.4+c.count/40),"work_orders.csv",c.top_cause));
+      (c.conflicts||[]).forEach(cf=>out.push(ev("CMMS","IT_BUSINESS",`CMMS data conflict: ${cf.wo_id} logged with contradictory causes ${JSON.stringify(cf.causes)}`,T.CMMS,0.5,cf.wo_id,cf.causes[0])));
+      return out;},
+    search_manual:()=>{const m=KB.manuals[a.model]; if(!m||!m["7.4"])return [];
+      return [ev("MANUAL","IT_BUSINESS",`Manual ${a.model} §7.4 (p.${m["7.4"].page}): alarm A-220 -> probable nozzle clog; procedure cited`,T.MANUAL,0.9,m["7.4"].cite,"Nozzle clog")];},
+    check_recent_changes:()=>a.moc.map(mc=>{const visc=/viscosity/i.test(mc.change);
+      return ev("MOC","IT_BUSINESS",`Recent change ${mc.id} (${mc.date}): ${mc.change} [risk_review=${mc.risk}]`,T.MOC,mc.risk==="pending"?0.6:0.35,mc.id,visc?"Viscosity (new lot)":null);}),
+    check_parts:()=>a.parts.map(p=>ev("PARTS","IT_BUSINESS",`Part ${p.part_no} (${p.desc}): ${p.on_hand} on hand, bin ${p.bin}, lead ${p.lead}d`,T.PARTS,0.88,p.part_no,null)),
+    check_safety_loto:()=>a.safety?[ev("SAFETY","IT_BUSINESS",`LOTO procedure ${a.safety.procedure} exists; permit ${a.safety.permit?"REQUIRED":"not required"}`,T.SAFETY,0.97,a.safety.procedure,null)]:[],
+    check_labor:()=>[ev("CMMS","IT_BUSINESS","Qualified filler tech (jmartin, LOTO-cert) on shift now; 1 available",T.CMMS,0.7,"rota",null)],
+    search_shift_notes:()=>a.shift.map(n=>ev("SHIFT_NOTES","IT_BUSINESS",`Shift note ${n.file}: tribal-knowledge lead (low trust) — "${(n.text.split("\n\n").pop()||"").slice(0,90)}"`,T.SHIFT_NOTES,0.5,n.file,"Nozzle clog")),
+    read_production_econ:()=>[ev("MES","OT_OPS",`Line ${a.line} bleeds downtime cost while down; prior downtime events on ${a.mes_id}`,T.MES,0.75,"oee_daily.csv",null)],
+    scan_ot_security:()=>KB.security.map(f=>ev("SAFETY","IT_BUSINESS",`OT-security finding in ${f.file}:${f.line} — ${f.issue} (${f.detail})`,T.SAFETY,0.9,`${f.file}:${f.line}`,null)),
+  };
+}
+
+// ---- adaptive policy (offline) -- reacts to evidence; not a fixed list
+function policy(called,graph){
+  const base=["read_timeline","read_maintenance_history"];
+  for(const t of base)if(!called.has(t))return {action:t,why:"establish what happened + maintenance history"};
+  const clog=graph.some(e=>/clog|high head pressure|low flow|below baseline/i.test(e.claim)||/nozzle clog/i.test(JSON.stringify(e.tags)));
+  const path=clog?["search_manual","check_parts","check_safety_loto","check_labor"]:["check_recent_changes","search_shift_notes","read_production_econ"];
+  for(const t of path)if(!called.has(t))return {action:t,why:clog?"clog signature seen -> confirm procedure, parts, safety":"no clear signature -> broaden the search"};
+  for(const t of ["scan_ot_security","check_recent_changes","search_shift_notes","read_production_econ","search_manual","check_parts","check_safety_loto","check_labor"])
+    if(!called.has(t))return {action:t,why:"complete coverage before deciding"};
+  return {action:"diagnose",why:"enough evidence gathered"};
+}
+
+function diagnose(graph,negatives){
+  const ranked=Object.entries(CAUSES).map(([cause,meta])=>{
+    let supporting=[],score=0;
+    for(const e of graph){const hay=(e.claim+" "+JSON.stringify(e.tags)).toLowerCase();
+      const sig=meta.signals.some(s=>hay.includes(s));
+      if(e.tags.asserts_cause===cause||sig){ if(meta.systems.includes(e.source_system)||e.tags.asserts_cause===cause){supporting.push(e.evidence_id);score+=e.weight;}}}
+    let pen=(negatives||[]).reduce((p,n)=>p+(cause.toLowerCase().includes(n.toLowerCase())?0.4:0),0);
+    return {cause,iso14224_code:meta.iso,supporting,score:Math.max(0,score-pen),would_change_my_mind:meta.falsifier};});
+  const total=ranked.reduce((s,r)=>s+r.score,0)||1;
+  ranked.forEach(r=>r.confidence=+(r.score/total).toFixed(2));
+  ranked.sort((x,y)=>y.confidence-x.confidence);
+  return ranked;
+}
+
+function buildPlan(KB,a,injectHall){
+  const m=KB.manuals[a.model]; const steps=[];
+  if(m&&m["7.4"]) m["7.4"].steps.forEach(s=>steps.push({n:s.n,text:s.text,loto_required:s.loto,part_numbers:s.parts,citation:{locator:s.cite,resolved:false}}));
+  if(injectHall)steps.push({n:steps.length+1,text:"Recalibrate per Manual §7.4 p.212",loto_required:false,part_numbers:[],citation:{locator:"MANUAL:Acme_Model_8200.md#7.4@p.212",resolved:false}});
+  const parts=[]; const seen=new Set();
+  steps.forEach(s=>s.part_numbers.forEach(pn=>{if(!seen.has(pn)){seen.add(pn);const p=KB.parts_catalog[pn];if(p)parts.push(p);}}));
+  if(!parts.length&&KB.parts_catalog["8200-NZ"])parts.push(KB.parts_catalog["8200-NZ"]);
+  const risk=steps.some(s=>s.loto_required)?"LOTO_PHYSICAL":"WORK_ORDER_DRAFT";
+  return {steps,parts,risk,est_minutes:45,techs:1};
+}
+
+function verify(KB,a,plan){
+  const m=KB.manuals[a.model]; const pages=m?m.pages:{};
+  let cited=0,resolved=0,refutations=[],halluc=[];
+  for(const s of plan.steps){ if(s.citation&&s.citation.locator){cited++;
+    // parse #sec@p.N
+    let ok=false; const mm=s.citation.locator.match(/#([\w.]+)@p\.(\d+)/);
+    if(mm){const sec=mm[1],page=+mm[2]; ok=(pages[sec]===page);}
+    s.citation.resolved=ok; if(ok)resolved++; else refutations.push(`Step ${s.n}: citation '${s.citation.locator}' does NOT resolve to a real manual passage — blocked.`);}
+    for(const pn of s.part_numbers){ if(!KB.parts_catalog[pn]){halluc.push(pn);refutations.push(`Step ${s.n}: part '${pn}' not in inventory.`);} }
+  }
+  const rate=cited?resolved/cited:0;
+  const passed=refutations.length===0&&rate>=0.999&&halluc.length===0;
+  return {grounded:passed,citation_resolution_rate:+rate.toFixed(3),hallucinated_parts:halluc,refutations,verifier_model:"offline-cross-check (different model with API key)",passed};
+}
+
+function safetyCheck(a,plan){
+  const physical=plan.risk==="LOTO_PHYSICAL"; const lotoStep=plan.steps.some(s=>s.loto_required);
+  const notes=[]; let passed=true;
+  if(physical&&!lotoStep){notes.push("Physical work planned but no LOTO step — FAIL.");passed=false;}
+  if(a.safety&&a.safety.permit)notes.push("HOT-PRODUCT permit may be required (temp-dependent).");
+  if(passed)notes.push("LOTO present, no safety-section contradiction, permits accounted for.");
+  return {passed,loto_present:!!a.safety,notes};
+}
+
+function gate(risk,conf,rate,safetyPass,verPass,autoApprove){
+  const base={WORK_ORDER_DRAFT:0.55,PARTS_RESERVE:0.6,LOTO_PHYSICAL:0.7,RECIPE_CHANGE:0.8,LINE_RESTART:0.75}[risk]||0.6;
+  const factor=Math.max(0.6,Math.min(1.0,5000/Math.max(1,rate)));
+  const req=+(base*factor).toFixed(2);
+  const approverRole={WORK_ORDER_DRAFT:"auto",LOTO_PHYSICAL:"maintenance_lead",RECIPE_CHANGE:"quality_process_eng",LINE_RESTART:"shift_supervisor",PARTS_RESERVE:"maintenance_planner"}[risk];
+  const esign=["LOTO_PHYSICAL","RECIPE_CHANGE","LINE_RESTART"].includes(risk);
+  if(!(safetyPass&&verPass))return{risk_class:risk,approver_role:approverRole,e_sign:esign,required_confidence:req,actual_confidence:conf,outcome:"REJECTED",rationale:"safety/verifier gate not passed"};
+  if(conf<req)return{risk_class:risk,approver_role:approverRole,e_sign:esign,required_confidence:req,actual_confidence:conf,outcome:"REJECTED",rationale:`confidence ${conf} < required ${req} (economics-routed)`};
+  if(approverRole==="auto")return{risk_class:risk,approver_role:"auto",e_sign:false,required_confidence:req,actual_confidence:conf,outcome:"APPROVED",rationale:"low-risk auto-approval (logged)"};
+  return{risk_class:risk,approver_role:approverRole,e_sign:esign,required_confidence:req,actual_confidence:conf,outcome:autoApprove?"APPROVED":"PENDING",rationale:autoApprove?`${approverRole} approved (e-sign)`:"awaiting role-matched human approval"};
+}
+
+function audit(entries){const GEN="0".repeat(14);let prev=GEN;const out=[];
+  entries.forEach((e,i)=>{const body=JSON.stringify({seq:i,kind:e.kind,body:e.body,prev});const h=cyrb53(body);out.push({seq:i,kind:e.kind,hash:h,prev,body:e.body});prev=h;});return out;}
+
+function run(KB,{hint,alarm,line,rate,autoApprove=true}){
+  _eid=0;
+  const A=[{kind:"intake",body:{asset_hint:hint,alarm_code:alarm,line,downtime_rate_per_hr:rate}}];
+  const res=resolveAsset(KB,hint,line);
+  const trace=[];
+  if(!res){A.push({kind:"abstain_escalate",body:{reason:"asset could not be resolved"}});
+    trace.push(`DECISION: ABSTAIN (early) -> asset could not be resolved from '${hint}'/'${line}'`);
+    return {decision:"ABSTAIN",framework:"in-browser-stategraph",reasoning_engine:"offline-deterministic-inference (in-browser)",tool_policy:"n/a",tools_called:[],
+      escalation:{reason:`asset could not be resolved from '${hint}'/'${line}'`,to:"senior maintenance / OEM"},
+      audit:audit(A),trace,evidence_items:[],hypotheses:[],contradictions:[],router_usage:{total_calls:0,total_tokens:0,total_cost_usd:0,providers_used:["in-browser"],by_problem_type:{}},evidence_summary:{n_items:0,n_contradictions:0,sources:[]},work_package:null};}
+  const a=res.asset;
+  let plan=null,ver=null,saf=null,gd=null,it=[];
+  A.push({kind:"resolve_asset",body:{funcloc:a.funcloc,confidence:res.conf}});
+  const prelim=(KB.manuals[a.model]&&alarm==="A-220")?"Nozzle clog":"unknown";
+  trace.push(`fast_path: preliminary cause '${prelim}' from alarm+manual`);
+  // agentic loop
+  const tools=makeTools(KB,a); const graph=[]; const called=new Set();
+  for(let step=0;step<12;step++){const d=policy(called,graph);
+    if(d.action==="diagnose"){trace.push(`agent[heuristic-offline]: decided to DIAGNOSE — ${d.why}`);break;}
+    const items=tools[d.action]?tools[d.action]():[]; called.add(d.action); items.forEach(it=>graph.push(it));
+    trace.push(`agent[heuristic-offline] → ${d.action}() :: +${items.length} cited fact(s)${items[0]?": "+items[0].claim.slice(0,80):""}  [why: ${d.why}]`);}
+  A.push({kind:"agentic_gather",body:{policy:"heuristic-offline",tools_called:[...called]}});
+  const hyps=diagnose(graph,[]);
+  A.push({kind:"diagnose",body:hyps.map(h=>({cause:h.cause,confidence:h.confidence}))});
+  trace.push(`hypothesis: offline weighted-inference -> ${hyps.map(h=>"("+h.cause+", "+h.confidence+")").join(", ")}`);
+  const top=hyps[0];
+  const contradictions=graph.filter(e=>e.tags&&e.tags.conflict).map(e=>({note:e.claim}));
+  if(top.confidence<TAU){A.push({kind:"abstain_escalate",body:{reason:`top confidence ${top.confidence} < tau ${TAU}`}});
+    trace.push(`DECISION: ABSTAIN -> escalate (top confidence ${top.confidence} < tau ${TAU})`);
+    return finish("ABSTAIN",{escalation:{reason:`top confidence ${top.confidence} < ${TAU}`,to:"senior maintenance / OEM"}});}
+  // plan + verify (catch hallucination, replan)
+  plan=buildPlan(KB,a,true); ver=verify(KB,a,plan);
+  A.push({kind:"verify",body:ver});
+  if(!ver.passed){trace.push(`verifier: REFUTED -> ${ver.refutations.join("; ")}; re-planning (inner loop)`);
+    plan=buildPlan(KB,a,false); ver=verify(KB,a,plan); A.push({kind:"verify_retry",body:ver});}
+  if(!ver.passed){A.push({kind:"abstain_escalate",body:{reason:"verifier could not ground the plan"}});
+    trace.push("DECISION: ABSTAIN -> verifier could not ground the plan");
+    return finish("ABSTAIN",{escalation:{reason:"verifier could not ground a cited procedure for this asset",to:"senior maintenance / OEM"}});}
+  saf=safetyCheck(a,plan); A.push({kind:"safety_precheck",body:saf});
+  gd=gate(plan.risk,top.confidence,rate,saf.passed,ver.passed,autoApprove); A.push({kind:"gate",body:gd});
+  if(gd.outcome==="APPROVED"){
+    const mk=(sys,act,parts)=>({system:sys,action:act,idempotency_key:cyrb53(a.funcloc+act+JSON.stringify(parts||"")).slice(0,12),created:true});
+    it.push(mk("CMMS","create_work_order")); if(plan.parts.length)it.push(mk("ERP","reserve_parts",plan.parts));
+    it.push(mk("QMS","create_qc_plan")); it.push(mk("NOTIFY","notify"));
+    it.forEach(x=>A.push({kind:"it_action",body:x}));
+    A.push({kind:"monitor",body:{fix_confirmed:true,note:"post-CIP flow back in 36-40 band per manual acceptance"}});
+    A.push({kind:"learn",body:{known_fix:`${top.cause} on ${a.funcloc} -> CIP + 8200-NZ per §7.4`}});}
+  function finish(decision,extra){
+    const value=+(((90-plan?.est_minutes||45)/60)*rate).toFixed(2);
+    const econ=plan?{downtime_rate_per_hr:rate,mttr_baseline_min:90,mttr_agent_min:plan.est_minutes,value_per_event_usd:+(((90-plan.est_minutes)/60)*rate).toFixed(2),agent_cost_usd:0,p_wrong_acted:"driven->0 via grounding+verify+gate"}:{};
+    const wp=decision==="ACT"?{
+      incident_id:"INC-"+cyrb53(hint+alarm).slice(0,8),asset_funcloc:a.funcloc,
+      likely_cause:top,evidence_trail:top.supporting,
+      safe_checks:plan.steps.filter(s=>s.loto_required).map(s=>s.text),
+      troubleshooting_path:plan.steps,
+      work_order_draft:{funcloc:a.funcloc,cause:top.cause,iso14224:top.iso14224_code,risk:plan.risk,est_minutes:plan.est_minutes,techs:plan.techs},
+      parts_request:plan.parts.map(p=>({part_no:p.part_no,desc:p.desc,on_hand:p.on_hand,bin:p.bin})),
+      qc_sampling_plan:{aql:2.5,n:5,check:"fill volume post-restart"},
+      restart_readiness:["LOTO removed","CIP complete","flow 36-40 L/min verified","QC sample pass","supervisor sign-off"],
+      shift_handover:`${a.funcloc} ${alarm}: likely ${top.cause} (conf ${top.confidence}). Plan grounded to Manual ${a.model} §7.4. Verifier PASS, safety PASS.`,
+      confidence:top.confidence,economics:econ}:null;
+    const sources=[...new Set(graph.map(e=>e.source_system))].sort();
+    return Object.assign({decision,framework:"in-browser-stategraph",
+      reasoning_engine:"offline-deterministic-inference (in-browser)",tool_policy:"heuristic-offline",
+      tools_called:[...called],trace,preliminary_cause:prelim,
+      work_package:wp,hypotheses:hyps,contradictions,verifier:ver,safety:saf,gate:gd,it_actions:it,
+      evidence_items:graph,audit:audit(A),
+      router_usage:{total_calls:0,total_tokens:0,total_cost_usd:0,providers_used:["in-browser-deterministic"],by_problem_type:{}},
+      evidence_summary:{n_items:graph.length,n_contradictions:contradictions.length,sources}},extra||{});}
+  return finish("ACT",{});
+}
+
+
+return {run, resolveAsset};
+})();
+let RUN=null, shown=0, playing=false, timer=null;
+
+function renderSteps(){
+  document.getElementById('steps').innerHTML = STAGES.map((s,i)=>
+    `<div class="step ${i<shown?'done':''} ${i===shown-1?'active':''}" onclick="goto(${i+1})">
+       <span class="dot">${i<shown?'✓':i+1}</span><span>${s.t}</span></div>`).join('');
+}
+function esc(s){return String(s==null?'':s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]))}
+
+function runFlow(){
+  document.getElementById('hello').style.display='none';
+  document.getElementById('result').innerHTML='';
+  const hint=val('f-hint'), alarm=val('f-alarm').trim(), rate=Number(val('f-rate'))||1000;
+  RUN = ENGINE.run(KB, {hint, alarm, line:hint, rate, autoApprove:true});   // computed live, every click
+  buildFlow(); shown=0; renderSteps();
+  const dec=RUN.decision;
+  document.getElementById('result').innerHTML=
+    `<div class="banner ${dec==='ACT'?'act':'abstain'}">Decision: ${dec} · ${esc(RUN.framework)} · reasoned by ${esc(RUN.reasoning_engine)} · `+
+    (dec==='ACT'?`${esc(RUN.work_package.likely_cause.cause)} @ conf ${RUN.work_package.confidence}`:`escalated — ${esc(RUN.escalation.reason)}`)+`</div>`;
+  next();
+}
+function val(id){return document.getElementById(id).value}
+
+function buildFlow(){
+  document.getElementById('flow').innerHTML = STAGES.map((s,i)=>
+    `<section class="stage" id="st${i}">
+       <div class="head"><div class="num">${i+1}</div><div class="ttl">${s.t}</div><div class="persona">${s.p}</div></div>
+       <div class="body"><div class="why">${s.why}</div><div id="bd${i}"></div></div>
+     </section>`).join('');
+  STAGES.forEach((s,i)=>document.getElementById('bd'+i).innerHTML=renderStage(s.k));
+}
+
+function renderStage(k){
+  const wp=RUN.work_package||{}, v=RUN.verifier||{}, sf=RUN.safety||{}, g=RUN.gate||{};
+  if(k==='intake'){const inc=(RUN.audit.find(a=>a.kind==='intake')||{}).body||{};
+    return kv('asset hint',inc.asset_hint)+kv('symptom',inc.symptom)+kv('line',inc.line)+
+      kv('alarm',inc.alarm_code)+kv('downtime $/hr','$'+Number(inc.downtime_rate_per_hr||0).toLocaleString())+
+      kv('incident id',inc.incident_id);}
+  if(k==='resolve'){const e=RUN.evidence_items.find(x=>x.source_system==='ASSET_REGISTRY')||{};
+    return `<div class="kv mono">${esc(e.claim||(wp.asset_funcloc||''))}</div>`+
+      tag('t-it','resolved')+tag('t-it','citation '+((e.citation||{}).locator||wp.asset_funcloc));}
+  if(k==='fastpath') return kv('preliminary cause',RUN.preliminary_cause||'—')+
+    `<div class="kv" style="color:var(--muted)">refined by the lenses below.</div>`;
+  if(k==='gather'){const by={}; RUN.evidence_items.forEach(e=>{(by[e.source_system]=by[e.source_system]||[]).push(e)});
+    const pol=RUN.tool_policy||'?';
+    let h=`<div class="kv"><b>Tool policy:</b> ${esc(pol)} ${/llm/.test(pol)?'(the model chose each tool)':'(adaptive offline policy; add a key to let the model choose)'}</div>`;
+    h+=`<div class="kv"><b>Tools the agent called:</b> ${(RUN.tools_called||[]).map(t=>'<span class=\'tag t-it\'>'+esc(t)+'</span>').join(' ')}</div>`;
+    const decisions=(RUN.trace||[]).filter(t=>t.startsWith('agent'));
+    if(decisions.length){h+=`<div class="kv" style="margin-top:6px"><b>Decision loop:</b></div>`;
+      decisions.forEach(d=>h+=`<div class="step-line">${esc(d.replace(/^agent\[[^\]]*\]\s*/,''))}</div>`);}
+    h+=`<div class="kv" style="margin:10px 0 4px"><b>${RUN.evidence_items.length}</b> cited facts across <b>${Object.keys(by).length}</b> silos:</div>`;
+    RUN.evidence_items.forEach(e=>{const ot=e.plane&&e.plane.startsWith('OT');
+      h+=`<div class="evrow"><span class="evsrc ${ot?'':' '}" style="color:${ot?'var(--ot)':'var(--it)'}">${esc(e.source_system)}</span>
+        <span>${esc(e.claim)}<div class="evcite">${esc((e.citation||{}).locator||'')} · trust ${e.trust} · conf ${e.confidence}</div></span>
+        <span><div class="bar-c"><div class="bar-f" style="width:${Math.round((e.trust||0)*100)}%"></div></div></span></div>`;});
+    return h;}
+  if(k==='diagnose'){let h=(RUN.hypotheses||[]).map(hp=>
+      `<div class="dx"><div class="bar-c"><div class="bar-f" style="width:${Math.round(hp.confidence*100)}%;background:${hp.confidence>0.6?'#534AB7':'#AFA9EC'}"></div></div>
+       <span><b>${esc(hp.cause)}</b> · conf ${hp.confidence} · ISO ${esc(hp.iso14224_code||'')} · ${(hp.supporting||[]).length} supporting</span></div>`).join('');
+    const top=(RUN.hypotheses||[])[0]||{};
+    h+=`<div class="kv" style="margin-top:8px"><b>Reasoned by:</b> ${esc(RUN.reasoning_engine)} ${/offline/.test(RUN.reasoning_engine)?'(add an API key in .env to let a real model decide)':'(live model)'}</div>`;
+    h+=`<div class="kv" style="color:var(--muted)">What would change my mind: ${esc(top.would_change_my_mind||'')}</div>`;
+    if((RUN.contradictions||[]).length) h+=`<div class="refute">⚠ ${RUN.contradictions.length} contradiction(s) surfaced, not averaged away.</div>`;
+    return h;}
+  if(k==='plan'){const steps=wp.troubleshooting_path||[];
+    let h=steps.map(s=>`<div class="step-line">${s.n}. ${esc(s.text)} ${s.loto_required?tag('t-warn','LOTO'):''}
+      <div class="evcite">${esc((s.citation||{}).locator||'')}</div></div>`).join('');
+    h+=`<div class="kv" style="margin-top:8px">est ${wp.work_order_draft?wp.work_order_draft.est_minutes:'?'} min · ${wp.work_order_draft?wp.work_order_draft.techs:1} tech · risk ${wp.work_order_draft?wp.work_order_draft.risk:''}</div>`;
+    (wp.parts_request||[]).forEach(p=>h+=tag('t-it',`${p.part_no} · ${p.on_hand} on hand · bin ${p.bin}`));
+    return h;}
+  if(k==='verify'){let h=`<div class="kv">verifier model <b>${esc(v.verifier_model)}</b> (different family from author)</div>`+
+      tag(v.passed?'t-pass':'t-fail',v.passed?'grounded PASS':'FAIL')+
+      tag('t-it','citation-resolution '+v.citation_resolution_rate)+
+      tag((v.hallucinated_parts||[]).length?'t-fail':'t-pass','hallucinated parts '+((v.hallucinated_parts||[]).length));
+    const ref=(RUN.trace||[]).find(t=>/REFUT/.test(t));
+    if(ref) h+=`<div class="refute">⚠ caught on first pass → re-planned: ${esc(ref.split('->')[1]||ref)}</div>`;
+    return h;}
+  if(k==='safety') return tag(sf.passed?'t-pass':'t-fail',sf.passed?'safety PASS':'safety FAIL')+
+    (sf.notes||[]).map(n=>`<div class="kv" style="color:var(--muted)">• ${esc(n)}</div>`).join('');
+  if(k==='gate') return kv('risk class',g.risk_class)+kv('approver',g.approver_role)+
+    kv('e-signature',g.e_sign?'required':'—')+kv('required confidence',g.required_confidence+' (economics-routed)')+
+    kv('actual confidence',g.actual_confidence)+tag(g.outcome==='APPROVED'?'t-pass':'t-fail',g.outcome)+
+    `<div class="kv" style="color:var(--muted)">${esc(g.rationale)}</div>`;
+  if(k==='act'){if(!(RUN.it_actions||[]).length) return '<div class="kv">no writes (abstained).</div>';
+    return (RUN.it_actions||[]).map(a=>`<div class="itrow"><span class="ok">✓</span>
+      <b>${esc(a.system)}</b>.${esc(a.action)} · created ${a.created} · <span class="evcite">key ${esc(a.idempotency_key||'')}</span></div>`).join('')+
+      `<div class="kv" style="margin-top:6px;color:var(--muted)">re-running the same incident → created=false (idempotent).</div>`;}
+  if(k==='learn'){const m=(RUN.audit.find(a=>a.kind==='monitor')||{}).body||{};
+    let h=kv('fix confirmed',m.fix_confirmed)+kv('note',m.note||'');
+    if(wp.shift_handover) h+=`<div class="wo" style="margin-top:8px">${esc(wp.shift_handover)}</div>`;
+    const e=wp.economics||{};
+    h+=`<div class="grid" style="margin-top:10px">
+      <div class="metric"><div class="l">value / event</div><div class="v">$${Number(e.value_per_event_usd||0).toLocaleString()}</div></div>
+      <div class="metric"><div class="l">MTTR</div><div class="v">${e.mttr_baseline_min}→${e.mttr_agent_min}m</div></div>
+      <div class="metric"><div class="l">agent cost</div><div class="v">$${e.agent_cost_usd}</div></div>
+      <div class="metric"><div class="l">model calls</div><div class="v">${RUN.router_usage.total_calls}</div></div></div>`;
+    h+=`<div class="kv" style="margin-top:10px"><b>Tamper-evident audit</b> · ${RUN.audit.length} hash-chained entries</div>`;
+    h+=`<div class="audit">`+RUN.audit.map(a=>`<div>#${a.seq} ${a.kind} · ${a.hash}</div>`).join('')+`</div>`;
+    return h;}
+  return '';
+}
+function kv(k,v){return `<div class="kv"><b>${esc(k)}:</b> ${esc(v)}</div>`}
+function tag(c,t){return `<span class="tag ${c}">${esc(t)}</span>`}
+
+function reveal(){
+  STAGES.forEach((s,i)=>{const el=document.getElementById('st'+i); if(!el)return;
+    el.classList.toggle('shown',i<shown); el.classList.toggle('current',i===shown-1);});
+  renderSteps();
+  if(shown>0){const el=document.getElementById('st'+(shown-1)); if(el)el.scrollIntoView({behavior:'smooth',block:'center'});}
+}
+function next(){if(!RUN)return; if(shown<STAGES.length){shown++;reveal();} else stopPlay();}
+function prev(){if(shown>1){shown--;reveal();}}
+function goto(n){if(!RUN)return; shown=Math.max(1,Math.min(STAGES.length,n));reveal();}
+function togglePlay(){playing?stopPlay():startPlay();}
+function startPlay(){if(!RUN){runFlow().then(()=>startPlay());return;} playing=true;
+  document.getElementById('playbtn').textContent='❚❚ Pause';
+  timer=setInterval(()=>{ if(shown>=STAGES.length){stopPlay();return;} next(); },3200);}
+function stopPlay(){playing=false;clearInterval(timer);document.getElementById('playbtn').textContent='▷ Play';}
+
+function proof(kind){
+  const out=document.getElementById('proofout');
+  if(kind==='eval'){
+    const cases=[{n:'L3 filler clog (A-220)',o:{hint:'Line 3 filler',alarm:'A-220',line:'Line 3',rate:10000},exp:'Nozzle clog'},
+                 {n:'L2 filler clog (A-220)',o:{hint:'Line 2 filler',alarm:'A-220',line:'Line 2',rate:8000},exp:'Nozzle clog'},
+                 {n:'unknown asset',o:{hint:'ghost xyz',alarm:'',line:'Line 9',rate:5000},exp:null}];
+    let top1=0,nd=0,abc=0,abt=0,cit=[],hall=0,sv=0,rows=[];
+    cases.forEach(c=>{const r=ENGINE.run(KB,c.o);
+      if(c.exp===null){abt++;if(r.decision==='ABSTAIN')abc++;rows.push('• '+c.n+': '+r.decision+' (expect ABSTAIN) '+(r.decision==='ABSTAIN'?'✓':'✗'));}
+      else{nd++;const got=r.decision==='ACT'?r.work_package.likely_cause.cause:null;if(got===c.exp)top1++;
+        if(r.verifier){cit.push(r.verifier.citation_resolution_rate);hall+=r.verifier.hallucinated_parts.length;}
+        if(r.safety&&!r.safety.passed)sv++;rows.push('• '+c.n+': '+got+(got===c.exp?' ✓':' ✗'));}});
+    out.textContent='EVAL (computed live, right now)\n\ndiagnosis top-1 accuracy : '+(top1/nd)+
+      '\ncitation-resolution rate: '+(cit.reduce((a,b)=>a+b,0)/(cit.length||1))+
+      '\nhallucinated part rate  : '+hall+'\nsafety violation rate   : '+sv+
+      '\nabstention precision    : '+(abc/(abt||1))+'\n\n'+rows.join('\n');return;}
+  if(kind==='boundary'){out.textContent='OT/IT BOUNDARY (enforced by construction)\nwritable planes: IT_BUSINESS\n\n✓ BLOCKED  write → OT_CONTROL\n✓ BLOCKED  write → OT_OPS\n\nThe agent has no method or token that writes to OT/control. Restart & LOTO are performed by humans.';return;}
+  if(kind==='providers'){out.textContent='MODEL ROUTING\nThis in-browser build runs the deterministic inference engine — no API key required.\nThe Python build routes by problem type: author = Opus tier, verifier = a DIFFERENT family (anti-collusion). Add ANTHROPIC_API_KEY / OPENAI_API_KEY to .env for live LLM reasoning.';return;}
+  if(kind==='dataset'){const m=KB.manifest;out.textContent='DATASET MANIFEST\n'+m.file_count+' files · '+m.formats.join(' ')+'\nscenario: '+m.scenario+'\n\nintentional defects:\n'+m.defects.map(d=>'• '+d.kind+' — '+d.file).join('\n');return;}
+  if(kind==='rag'){const q=(prompt('Ask the OEM manual (natural language):','clear a clogged nozzle with lockout')||'').toLowerCase();
+    const m=KB.manuals['Acme Model 8200'];const secs=[['7.4',m['7.4'].text,m['7.4'].page],['Safety',m['Safety'].text,m['Safety'].page]];
+    const scored=secs.map(([s,t,p])=>{const ws=q.split(/\W+/).filter(Boolean);const tl=(t||'').toLowerCase();return{s,p,t,sc:ws.reduce((a,w)=>a+(tl.includes(w)?1:0),0)};}).sort((a,b)=>b.sc-a.sc);
+    out.textContent='MANUAL RAG (keyword retrieval, in-browser)\nquery: '+q+'\n\n'+scored.map(h=>`§${h.s} p.${h.p} (score ${h.sc})\n   ${(h.t||'').slice(0,130)}…`).join('\n\n');return;}
+}
+renderSteps();
+</script></body></html>

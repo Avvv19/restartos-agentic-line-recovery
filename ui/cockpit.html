@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RestartOS — Fault-to-Fix Cockpit</title>
+<style>
+:root{--bg:#FbFbFd;--surface:#fff;--ink:#0B0E14;--muted:#5A6473;--faint:#8A93A3;
+--line:#E3E7EE;--cobalt:#2563EB;--it:#15803D;--vf:#B45309;--gt:#B91C1C;--ag:#6D28D9}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);
+font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.5}
+.mono{font-family:"SF Mono",Consolas,monospace}
+.wrap{max-width:880px;margin:0 auto;padding:22px 18px 80px}
+.bar{background:#0B0E14;color:#fff;border-radius:12px 12px 0 0;padding:12px 16px;
+display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;font-size:13px}
+.bar .live{color:#86EFAC;font-weight:600;font-size:12px}
+.card{background:var(--surface);border:1px solid var(--line);border-top:none;
+border-radius:0 0 12px 12px;padding:16px 18px}
+h1{font-size:18px;margin:0}
+.sect{font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);
+font-weight:700;margin:18px 0 7px}
+.trace div{font-size:12.8px;margin:3px 0}.ok{color:var(--it)}.warn{color:var(--vf)}.bad{color:var(--gt)}
+.dx{display:flex;align-items:center;gap:10px;font-size:13px;margin:5px 0}
+.bar-c{flex:0 0 120px;height:8px;background:#EEF1F6;border-radius:4px;overflow:hidden}
+.bar-f{height:100%;background:var(--cobalt)}
+.wo{background:#F7F9FC;border:1px solid var(--line);border-radius:8px;padding:12px 14px;font-size:12.8px}
+.risk{color:var(--gt);font-weight:700}
+.pill{display:inline-block;font-size:10.5px;font-weight:700;border-radius:999px;
+padding:2px 9px;border:1px solid;margin-right:5px}
+.p-pass{color:var(--it);border-color:#BBF7D0;background:#F0FDF4}
+.p-fail{color:var(--gt);border-color:#FECACA;background:#FEF2F2}
+.btns{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap}
+.btn{font-size:12.8px;font-weight:600;border-radius:8px;padding:9px 16px;border:1px solid var(--line);background:#fff;cursor:pointer}
+.btn.pri{background:var(--it);color:#fff;border-color:var(--it)}.btn.dng{color:var(--gt);border-color:#FECACA}
+.muted{color:var(--muted);font-size:12.5px}
+.kv{font-size:12.6px;margin:2px 0}.kv b{color:var(--ink)}
+.drop{border:2px dashed var(--line);border-radius:10px;padding:20px;text-align:center;color:var(--muted);font-size:13px;margin-bottom:14px;cursor:pointer}
+.refute{color:var(--vf);font-size:12.4px;margin:2px 0}
+code{background:#F1F5F9;border-radius:4px;padding:1px 5px;font-size:11.5px}
+</style></head>
+<body><div class="wrap">
+<div class="drop" id="drop">Drop a <code>run_*.json</code> artifact here, or click to load
+(<code>_it_state/latest_run.json</code>). The cockpit auto-tries to load the latest run.</div>
+<input type="file" id="file" accept="application/json" style="display:none">
+
+<div class="bar"><span id="title">RestartOS — load a run</span><span class="live" id="live"></span></div>
+<div class="card" id="root"><div class="muted">No run loaded yet.</div></div>
+</div>
+<script>
+const $=id=>document.getElementById(id);
+function esc(s){return String(s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]))}
+function render(r){
+  const dec=r.decision; const wp=r.work_package;
+  $('title').textContent=`FAULT-TO-FIX · ${r.incident_id} · ${dec}`;
+  $('live').textContent=`● ${r.framework}`;
+  let h='';
+  // trace
+  h+='<div class="sect">Agent trace</div><div class="trace">';
+  (r.trace||[]).forEach(t=>{
+    const cls=/REFUT|abstain|degraded/i.test(t)?'warn':(/memory:|grounded|persisted/i.test(t)?'ok':'ok');
+    h+=`<div><span class="${cls}">●</span> ${esc(t)}</div>`;});
+  h+='</div>';
+
+  // --- Incident memory (Postgres) -------------------------------- //
+  const priorEv = (r.evidence_items||[]).find(e=>e.source_system==='INCIDENT_MEMORY');
+  if(priorEv){
+    h+='<div class="sect">Incident memory · recalled from Postgres</div>';
+    h+=`<div class="wo mono" style="font-size:12px">${esc(priorEv.claim)}</div>`;
+    h+=`<div class="muted" style="margin-top:4px;font-size:11.5px">weight ${priorEv.trust*priorEv.confidence} · produced_by ${esc(priorEv.produced_by||'')}</div>`;
+  }
+
+  // --- Manual retrieval (Qdrant + BM25) -------------------------- //
+  const manualHits=(r.evidence_items||[]).filter(e=>e.source_system==='MANUAL');
+  if(manualHits.length){
+    h+='<div class="sect">Manual grounding · Qdrant semantic + BM25 hybrid</div>';
+    manualHits.slice(0,3).forEach(e=>{
+      h+=`<div class="wo mono" style="font-size:12px"><b>${esc(e.citation?.locator||'')}</b><br>${esc((e.claim||'').slice(0,260))}</div>`;
+    });
+  }
+
+  // --- Evidence source summary ----------------------------------- //
+  const ev = r.evidence_summary||{};
+  if(ev.sources && ev.sources.length){
+    h+='<div class="sect">Evidence graph · ' + ev.n_items + ' facts across ' + ev.sources.length + ' systems</div>';
+    h+='<div class="kv mono" style="font-size:11.5px">';
+    ev.sources.forEach(s=>{
+      const cnt=(r.evidence_items||[]).filter(e=>e.source_system===s).length;
+      const cls = (s==='INCIDENT_MEMORY' || s==='MANUAL') ? 'ok' : '';
+      h+=`<span class="pill ${cls?'p-pass':''}" style="font-size:10.5px">${esc(s)} · ${cnt}</span> `;
+    });
+    h+=`</div><div class="muted" style="font-size:11.5px;margin-top:4px">total weight ${ev.total_weight} · contradictions ${ev.n_contradictions}</div>`;
+  }
+
+  if(dec==='ABSTAIN'){
+    h+='<div class="sect">Decision · ABSTAIN → escalate</div>';
+    h+=`<div class="wo"><span class="risk">ESCALATED</span> ${esc(r.escalation.reason)}<br>
+        to: ${esc(r.escalation.to)}</div>`;
+  }else{
+    // diagnosis
+    h+=`<div class="sect">Diagnosis · confidence ${wp.confidence}</div>`;
+    const lc=wp.likely_cause;
+    h+=`<div class="dx"><div class="bar-c"><div class="bar-f" style="width:${Math.round(lc.confidence*100)}%"></div></div>
+        <span><b>${esc(lc.cause)}</b> · ISO 14224 ${esc(lc.iso14224_code||'')}</span></div>`;
+    h+=`<div class="muted">What would change my mind: ${esc(lc.would_change_my_mind)}</div>`;
+    // verifier + safety
+    const v=r.verifier,s=r.safety;
+    h+='<div class="sect">Verification gates</div>';
+    h+=`<div><span class="pill ${v.passed?'p-pass':'p-fail'}">verifier ${v.passed?'PASS':'FAIL'}</span>
+        <span class="pill ${s.passed?'p-pass':'p-fail'}">safety ${s.passed?'PASS':'FAIL'}</span>
+        <span class="muted">cross-model: ${esc(v.verifier_model)} · citation-resolution ${v.citation_resolution_rate} · hallucinated parts ${v.hallucinated_parts.length}</span></div>`;
+    (v.refutations||[]).forEach(x=>h+=`<div class="refute">⚠ ${esc(x)} (caught → re-planned)</div>`);
+    // work order
+    h+='<div class="sect">Proposed work order</div>';
+    const wo=wp.work_order_draft;
+    h+=`<div class="wo"><span class="risk">risk ${esc(wo.risk)}</span> · Asset ${esc(wo.funcloc)}
+        · Cause ${esc(wo.cause)} (${esc(wo.iso14224)}) · ${wo.est_minutes} min · ${wo.techs} tech<br>`;
+    (wp.parts_request||[]).forEach(p=>h+=`Parts <span class="ok">✓</span> ${esc(p.part_no)} (${esc(p.on_hand)} on hand · bin ${esc(p.bin)}) `);
+    h+=`<br>Safe checks <span class="ok">✓</span> ${esc((wp.safe_checks||[]).join('; '))}</div>`;
+    // gate
+    const g=r.gate;
+    h+='<div class="sect">Authorization gate</div>';
+    h+=`<div class="kv">risk-class <b>${esc(g.risk_class)}</b> → approver <b>${esc(g.approver_role)}</b>
+        · e-sign ${g.e_sign?'required':'—'} · required conf ${g.required_confidence} (economics-routed)</div>`;
+    h+=`<div class="kv">outcome <b>${esc(g.outcome)}</b> — ${esc(g.rationale)}</div>`;
+    // economics
+    const e=wp.economics;
+    h+='<div class="sect">Economics</div>';
+    h+=`<div class="kv">value/event <b>$${Number(e.value_per_event_usd).toLocaleString()}</b>
+        (MTTR ${e.mttr_baseline_min}→${e.mttr_agent_min} min @ $${Number(e.downtime_rate_per_hr).toLocaleString()}/hr)
+        · agent cost $${e.agent_cost_usd}</div>`;
+    h+='<div class="btns"><span class="btn dng">Reject</span><span class="btn">Edit</span>'+
+       '<span class="btn pri">Approve &amp; create WO</span></div>';
+    h+='<div class="muted" style="margin-top:8px">Buttons are the human go/no-go surface. '+
+       'This run was decided by: '+esc(g.outcome)+'.</div>';
+  }
+  // --- IT writes (actual outcomes produced by the agent) ---- //
+  if((r.it_actions||[]).length){
+    h+='<div class="sect">IT writes · outcomes the agent produced</div>';
+    r.it_actions.forEach(a=>{
+      const rec=a.record||{};
+      let label='';
+      if(rec.wo_id) label=`Work Order <b>${esc(rec.wo_id)}</b> · ${esc(rec.cause||'')} · ${rec.est_minutes||'?'} min · ${(rec.steps||[]).length} steps`;
+      else if(rec.reservation_id) label=`Parts Reservation <b>${esc(rec.reservation_id)}</b> · ${(rec.lines||[]).map(l=>l.part_no+'×'+l.qty).join(', ')} · ${esc(rec.status||'')}`;
+      else if(rec.plan_id) label=`QC Plan <b>${esc(rec.plan_id)}</b> · ${esc(rec.sampling||'')}`;
+      else if(rec.to) label=`Notify <b>${esc(rec.to)}</b> · "${esc(rec.message||'')}" · ${esc(rec.status||'')}`;
+      else label=esc(JSON.stringify(rec).slice(0,180));
+      h+=`<div class="wo mono" style="font-size:12px"><span class="pill p-pass">${esc(a.system)}.${esc(a.action)}</span> ${label}</div>`;
+    });
+  }
+
+  // router + audit footer
+  const u=r.router_usage;
+  h+='<div class="sect">Model router (token usage by problem type)</div>';
+  h+=`<div class="kv mono">calls ${u.total_calls} · tokens ${u.total_tokens} · cost $${u.total_cost_usd} · providers ${esc((u.providers_used||[]).join(', '))}</div>`;
+  Object.entries(u.by_problem_type||{}).forEach(([k,v])=>h+=`<div class="kv mono muted">${esc(k)}: ${v.calls} calls · ${v.tokens} tok</div>`);
+  h+=`<div class="sect">Tamper-evident audit</div><div class="kv mono muted">${(r.audit||[]).length} hash-chained entries · last hash ${(r.audit&&r.audit.length?esc(r.audit[r.audit.length-1].hash):'')}…</div>`;
+  $('root').innerHTML=h;
+}
+function load(txt){try{render(JSON.parse(txt))}catch(e){$('root').innerHTML='<div class="bad">Invalid run JSON: '+esc(e.message)+'</div>'}}
+$('drop').onclick=()=>$('file').click();
+$('file').onchange=e=>{const f=e.target.files[0];if(f){const r=new FileReader();r.onload=()=>load(r.result);r.readAsText(f)}};
+['dragover','drop'].forEach(ev=>$('drop').addEventListener(ev,e=>{e.preventDefault();
+  if(ev==='drop'&&e.dataTransfer.files[0]){const r=new FileReader();r.onload=()=>load(r.result);r.readAsText(e.dataTransfer.files[0])}}));
+fetch('/api/latest_run').then(r=>r.ok?r.text():Promise.reject())
+  .catch(()=>fetch('../_it_state/latest_run.json').then(r=>r.ok?r.text():Promise.reject()))
+  .then(load).catch(()=>{});
+</script></body></html>

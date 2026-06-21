@@ -1,0 +1,68 @@
+services:
+  qdrant:
+    image: qdrant/qdrant:v1.12.4
+    container_name: restartos-qdrant
+    ports:
+      - "6333:6333"
+      - "6334:6334"
+    volumes:
+      - qdrant_data:/qdrant/storage
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c ':> /dev/tcp/127.0.0.1/6333' || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: restartos-postgres
+    environment:
+      POSTGRES_USER: restartos
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-restartos}
+      POSTGRES_DB: restartos
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U restartos -d restartos"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  engine:
+    build: .
+    image: restartos-engine:latest
+    container_name: restartos-engine
+    depends_on:
+      qdrant:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    environment:
+      # Override hostnames so the engine talks to the sibling containers.
+      QDRANT_URL: http://qdrant:6333
+      POSTGRES_URL: postgresql://restartos:${POSTGRES_PASSWORD:-restartos}@postgres:5432/restartos
+      # Provider keys passed through from the host .env (never baked into the image).
+      NIM_API_KEY: ${NIM_API_KEY:-}
+      NIM_BASE_URL: ${NIM_BASE_URL:-https://integrate.api.nvidia.com/v1}
+      NIM_MODEL: ${NIM_MODEL:-nvidia/nemotron-3-ultra-550b-a55b}
+      GROQ_API_KEY: ${GROQ_API_KEY:-}
+      GROQ_BASE_URL: ${GROQ_BASE_URL:-https://api.groq.com/openai/v1}
+      GROQ_MODEL: ${GROQ_MODEL:-llama-3.3-70b-versatile}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      GEMINI_BASE_URL: ${GEMINI_BASE_URL:-https://generativelanguage.googleapis.com/v1beta/openai}
+      GEMINI_MODEL: ${GEMINI_MODEL:-gemini-2.0-flash}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      RESTARTOS_DEMO_REPLAN: ${RESTARTOS_DEMO_REPLAN:-0}
+    ports:
+      - "8000:8000"
+    volumes:
+      - engine_state:/app/_it_state
+    restart: unless-stopped
+
+volumes:
+  qdrant_data:
+  postgres_data:
+  engine_state:

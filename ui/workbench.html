@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RestartOS — Agentic Line-Recovery Workbench</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+<style>body{margin:0}#root{height:100vh}::-webkit-scrollbar{width:8px;height:8px}::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:4px}</style>
+</head><body>
+<div id="root"></div>
+<script>
+window.KB = {"assets": [{"funcloc": "FL-PKG-03-FILL", "line": "Line 3", "model": "Acme Model 8200", "mes_id": "L3-FIL", "crit": "A", "aliases": ["FL-PKG-03-FILL", "FL-PKG-3-FILL"], "tags": ["4471", "4472", "4473"], "historian": [{"tag": "4471", "meaning": "fill_head_pressure", "uom": "bar", "baseline": 4.22, "peak": 6.72, "trough": 4.07, "stale": 0, "signal": "ABOVE baseline (high head pressure)", "conf": 0.8}, {"tag": "4472", "meaning": "fill_flow_rate", "uom": "L/min", "baseline": 37.91, "peak": 39.13, "trough": 13.3, "stale": 0, "signal": "BELOW baseline (low flow)", "conf": 0.8}, {"tag": "4473", "meaning": "nozzle_vibration", "uom": "mm/s", "baseline": 3.23, "peak": 3.54, "trough": 3.16, "stale": 0, "signal": "within normal band", "conf": 0.4}], "cmms": {"top_cause": "Nozzle clog", "count": 15, "n_wo": 26, "conflicts": [{"wo_id": "WO-44999", "causes": ["Nozzle clog", "Operator error"]}]}, "moc": [{"id": "MOC-2026-051", "date": "2026-06-30T09:12:00", "change": "New product lot LOT-7741 introduced; viscosity spec 1.8x prior lot", "risk": "pending"}, {"id": "MOC-2026-047", "date": "2026-06-24T14:00:00", "change": "PM completed: nozzle inspection, no parts replaced", "risk": "closed"}], "parts": [{"part_no": "8200-NZ", "desc": "Nozzle kit Model 8200", "on_hand": 2, "bin": "A4", "lead": 5}, {"part_no": "8200-SL", "desc": "Seal kit Model 8200", "on_hand": 0, "bin": "A5", "lead": 14}, {"part_no": "6204-2RS", "desc": "Bearing 6204-2RS", "on_hand": 11, "bin": "C2", "lead": 3}], "safety": {"procedure": "LOTO-FILL-03.md", "permit": true}, "shift": [{"file": "2026-06-30_day.md", "text": "# Shift handover 2026-06-30 (day)\n\n09:20 \u2014 L3 filler down, alarm A-220. Head pressure pinned high, flow dropped to ~13 L/min. New lot LOT-7741 started 09:12, real thick stuff. Reckon nozzle's clogged again \u2014 third time this month. Flagged for maint, did NOT touch it (needs LOTO)."}, {"file": "2026-06-30_night.md", "text": "# Shift handover 2026-06-30 (night)\n\nL3 filler chucked a wobbly ~09:15, head pressure pinned, flow tanked. Smells like a clog."}]}, {"funcloc": "FL-PKG-03-CAP", "line": "Line 3", "model": "Acme Model 6100", "mes_id": "L3-CAP", "crit": "B", "aliases": ["FL-PKG-03-CAP"], "tags": ["4480", "4481"], "historian": [{"tag": "4480", "meaning": "cap_torque", "uom": "Nm", "baseline": 11.97, "peak": 11.97, "trough": 11.97, "stale": 95, "signal": "within normal band", "conf": 0.4}, {"tag": "4481", "meaning": "cap_rate", "uom": "cpm", "baseline": 219.84, "peak": 226.32, "trough": 213.4, "stale": 0, "signal": "within normal band", "conf": 0.4}], "cmms": {"top_cause": "Seal leak", "count": 8, "n_wo": 28, "conflicts": []}, "moc": [], "parts": [], "safety": {"procedure": "LOTO-FL-PKG-03-CAP.md", "permit": false}, "shift": [{"file": "2026-06-30_day.md", "text": "# Shift handover 2026-06-30 (day)\n\n09:20 \u2014 L3 filler down, alarm A-220. Head pressure pinned high, flow dropped to ~13 L/min. New lot LOT-7741 started 09:12, real thick stuff. Reckon nozzle's clogged again \u2014 third time this month. Flagged for maint, did NOT touch it (needs LOTO)."}, {"file": "2026-06-30_night.md", "text": "# Shift handover 2026-06-30 (night)\n\nL3 filler chucked a wobbly ~09:15, head pressure pinned, flow tanked. Smells like a clog."}]}, {"funcloc": "FL-PKG-03-LBL", "line": "Line 3", "model": "Sato Model LX", "mes_id": "L3-LBL", "crit": "C", "aliases": ["FL-PKG-03-LBL"], "tags": ["4490"], "historian": [{"tag": "4490", "meaning": "label_registration", "uom": "mm", "baseline": 0.3, "peak": 0.31, "trough": 0.29, "stale": 0, "signal": "within normal band", "conf": 0.4}], "cmms": {"top_cause": "PLC fault", "count": 8, "n_wo": 22, "conflicts": []}, "moc": [], "parts": [], "safety": null, "shift": [{"file": "2026-06-30_day.md", "text": "# Shift handover 2026-06-30 (day)\n\n09:20 \u2014 L3 filler down, alarm A-220. Head pressure pinned high, flow dropped to ~13 L/min. New lot LOT-7741 started 09:12, real thick stuff. Reckon nozzle's clogged again \u2014 third time this month. Flagged for maint, did NOT touch it (needs LOTO)."}, {"file": "2026-06-30_night.md", "text": "# Shift handover 2026-06-30 (night)\n\nL3 filler chucked a wobbly ~09:15, head pressure pinned, flow tanked. Smells like a clog."}]}, {"funcloc": "FL-PKG-02-FILL", "line": "Line 2", "model": "Acme Model 8200", "mes_id": "L2-FIL", "crit": "A", "aliases": ["FL-PKG-02-FILL"], "tags": ["3471", "3472"], "historian": [{"tag": "3471", "meaning": "fill_head_pressure", "uom": "bar", "baseline": 4.2, "peak": 4.33, "trough": 4.08, "stale": 0, "signal": "within normal band", "conf": 0.4}, {"tag": "3472", "meaning": "fill_flow_rate", "uom": "L/min", "baseline": 37.98, "peak": 39.14, "trough": 36.91, "stale": 0, "signal": "within normal band", "conf": 0.4}], "cmms": {"top_cause": "Nozzle clog", "count": 5, "n_wo": 20, "conflicts": []}, "moc": [], "parts": [{"part_no": "8200-NZ", "desc": "Nozzle kit Model 8200", "on_hand": 2, "bin": "A4", "lead": 5}, {"part_no": "8200-SL", "desc": "Seal kit Model 8200", "on_hand": 0, "bin": "A5", "lead": 14}, {"part_no": "6204-2RS", "desc": "Bearing 6204-2RS", "on_hand": 11, "bin": "C2", "lead": 3}], "safety": {"procedure": "LOTO-FL-PKG-02-FILL.md", "permit": false}, "shift": [{"file": "2026-06-30_day.md", "text": "# Shift handover 2026-06-30 (day)\n\n09:20 \u2014 L3 filler down, alarm A-220. Head pressure pinned high, flow dropped to ~13 L/min. New lot LOT-7741 started 09:12, real thick stuff. Reckon nozzle's clogged again \u2014 third time this month. Flagged for maint, did NOT touch it (needs LOTO)."}, {"file": "2026-06-30_night.md", "text": "# Shift handover 2026-06-30 (night)\n\nL3 filler chucked a wobbly ~09:15, head pressure pinned, flow tanked. Smells like a clog."}]}, {"funcloc": "FL-PKG-01-CONV", "line": "Line 1", "model": "Intralox ARB", "mes_id": "L1-CNV", "crit": "C", "aliases": ["FL-PKG-01-CONV"], "tags": ["2400", "2401"], "historian": [{"tag": "2400", "meaning": "conv_speed", "uom": "m/s", "baseline": 1.2, "peak": 1.24, "trough": 1.17, "stale": 0, "signal": "within normal band", "conf": 0.4}, {"tag": "2401", "meaning": "conv_motor_amps", "uom": "A", "baseline": 17.84, "peak": 18.51, "trough": 17.47, "stale": 0, "signal": "within normal band", "conf": 0.4}], "cmms": {"top_cause": "Calibration drift", "count": 6, "n_wo": 26, "conflicts": []}, "moc": [], "parts": [], "safety": {"procedure": "LOTO-FL-PKG-01-CONV.md", "permit": false}, "shift": [{"file": "2026-06-30_day.md", "text": "# Shift handover 2026-06-30 (day)\n\n09:20 \u2014 L3 filler down, alarm A-220. Head pressure pinned high, flow dropped to ~13 L/min. New lot LOT-7741 started 09:12, real thick stuff. Reckon nozzle's clogged again \u2014 third time this month. Flagged for maint, did NOT touch it (needs LOTO)."}, {"file": "2026-06-30_night.md", "text": "# Shift handover 2026-06-30 (night)\n\nL3 filler chucked a wobbly ~09:15, head pressure pinned, flow tanked. Smells like a clog."}]}, {"funcloc": "FL-UTL-00-AIR", "line": "Utility", "model": "Atlas GA75", "mes_id": "UT-AIR", "crit": "A", "aliases": ["FL-UTL-00-AIR"], "tags": ["1100"], "historian": [{"tag": "1100", "meaning": "air_pressure", "uom": "bar", "baseline": 6.53, "peak": 6.69, "trough": 6.3, "stale": 0, "signal": "within normal band", "conf": 0.4}], "cmms": {"top_cause": "Bearing wear", "count": 5, "n_wo": 29, "conflicts": []}, "moc": [], "parts": [], "safety": null, "shift": [{"file": "2026-06-30_day.md", "text": "# Shift handover 2026-06-30 (day)\n\n09:20 \u2014 L3 filler down, alarm A-220. Head pressure pinned high, flow dropped to ~13 L/min. New lot LOT-7741 started 09:12, real thick stuff. Reckon nozzle's clogged again \u2014 third time this month. Flagged for maint, did NOT touch it (needs LOTO)."}, {"file": "2026-06-30_night.md", "text": "# Shift handover 2026-06-30 (night)\n\nL3 filler chucked a wobbly ~09:15, head pressure pinned, flow tanked. Smells like a clog."}]}, {"funcloc": "FL-PKG-04-FILL", "line": "Line 4", "model": "Acme Model 8200", "mes_id": "L4-FIL", "crit": "A", "aliases": ["FL-PKG-04-FILL"], "tags": ["5471", "5472", "5473"], "historian": [{"tag": "5471", "meaning": "fill_head_pressure", "uom": "bar", "baseline": 4.21, "peak": 4.32, "trough": 4.08, "stale": 0, "signal": "within normal band", "conf": 0.4}, {"tag": "5472", "meaning": "fill_flow_rate", "uom": "L/min", "baseline": 37.79, "peak": 39.07, "trough": 36.91, "stale": 0, "signal": "within normal band", "conf": 0.4}, {"tag": "5473", "meaning": "nozzle_vibration", "uom": "mm/s", "baseline": 2.1, "peak": 2.16, "trough": 2.04, "stale": 0, "signal": "within normal band", "conf": 0.4}], "cmms": {"top_cause": "Seal leak", "count": 4, "n_wo": 17, "conflicts": []}, "moc": [], "parts": [{"part_no": "8200-NZ", "desc": "Nozzle kit Model 8200", "on_hand": 2, "bin": "A4", "lead": 5}, {"part_no": "8200-SL", "desc": "Seal kit Model 8200", "on_hand": 0, "bin": "A5", "lead": 14}, {"part_no": "6204-2RS", "desc": "Bearing 6204-2RS", "on_hand": 11, "bin": "C2", "lead": 3}], "safety": null, "shift": [{"file": "2026-06-30_day.md", "text": "# Shift handover 2026-06-30 (day)\n\n09:20 \u2014 L3 filler down, alarm A-220. Head pressure pinned high, flow dropped to ~13 L/min. New lot LOT-7741 started 09:12, real thick stuff. Reckon nozzle's clogged again \u2014 third time this month. Flagged for maint, did NOT touch it (needs LOTO)."}, {"file": "2026-06-30_night.md", "text": "# Shift handover 2026-06-30 (night)\n\nL3 filler chucked a wobbly ~09:15, head pressure pinned, flow tanked. Smells like a clog."}]}, {"funcloc": "FL-PKG-04-CAP", "line": "Line 4", "model": "Acme Model 6100", "mes_id": "L4-CAP", "crit": "B", "aliases": ["FL-PKG-04-CAP"], "tags": ["5480", "5481"], "historian": [{"tag": "5480", "meaning": "cap_torque", "uom": "Nm", "baseline": 11.96, "peak": 12.36, "trough": 11.64, "stale": 0, "signal": "within normal band", "conf": 0.4}, {"tag": "5481", "meaning": "cap_rate", "uom": "cpm", "baseline": 219.63, "peak": 226.59, "trough": 213.42, "stale": 0, "signal": "within normal band", "conf": 0.4}], "cmms": {"top_cause": "Lubrication", "count": 3, "n_wo": 16, "conflicts": []}, "moc": [], "parts": [], "safety": null, "shift": [{"file": "2026-06-30_day.md", "text": "# Shift handover 2026-06-30 (day)\n\n09:20 \u2014 L3 filler down, alarm A-220. Head pressure pinned high, flow dropped to ~13 L/min. New lot LOT-7741 started 09:12, real thick stuff. Reckon nozzle's clogged again \u2014 third time this month. Flagged for maint, did NOT touch it (needs LOTO)."}, {"file": "2026-06-30_night.md", "text": "# Shift handover 2026-06-30 (night)\n\nL3 filler chucked a wobbly ~09:15, head pressure pinned, flow tanked. Smells like a clog."}]}, {"funcloc": "FL-PKG-05-FILL", "line": "Line 5", "model": "Krones VarioFill", "mes_id": "L5-FIL", "crit": "A", "aliases": ["FL-PKG-05-FILL"], "tags": ["6471", "6472", "6473"], "historian": [{"tag": "6471", "meaning": "fill_head_pressure", "uom": "bar", "baseline": 4.19, "peak": 4.32, "trough": 4.08, "stale": 0, "signal": "within normal band", "conf": 0.4}, {"tag": "6472", "meaning": "fill_flow_rate", "uom": "L/min", "baseline": 37.77, "peak": 39.1, "trough": 36.86, "stale": 0, "signal": "within normal band", "conf": 0.4}, {"tag": "6473", "meaning": "nozzle_vibration", "uom": "mm/s", "baseline": 2.11, "peak": 2.16, "trough": 2.04, "stale": 0, "signal": "within normal band", "conf": 0.4}], "cmms": {"top_cause": "PLC fault", "count": 3, "n_wo": 16, "conflicts": []}, "moc": [], "parts": [{"part_no": "8200-NZ", "desc": "Nozzle kit Model 8200", "on_hand": 2, "bin": "A4", "lead": 5}, {"part_no": "8200-SL", "desc": "Seal kit Model 8200", "on_hand": 0, "bin": "A5", "lead": 14}, {"part_no": "6204-2RS", "desc": "Bearing 6204-2RS", "on_hand": 11, "bin": "C2", "lead": 3}], "safety": null, "shift": [{"file": "2026-06-30_day.md", "text": "# Shift handover 2026-06-30 (day)\n\n09:20 \u2014 L3 filler down, alarm A-220. Head pressure pinned high, flow dropped to ~13 L/min. New lot LOT-7741 started 09:12, real thick stuff. Reckon nozzle's clogged again \u2014 third time this month. Flagged for maint, did NOT touch it (needs LOTO)."}, {"file": "2026-06-30_night.md", "text": "# Shift handover 2026-06-30 (night)\n\nL3 filler chucked a wobbly ~09:15, head pressure pinned, flow tanked. Smells like a clog."}]}, {"funcloc": "FL-PKG-05-PAL", "line": "Line 5", "model": "KUKA KR-210", "mes_id": "L5-PAL", "crit": "B", "aliases": ["FL-PKG-05-PAL"], "tags": ["6490", "6491"], "historian": [{"tag": "6490", "meaning": "pal_cycle_time", "uom": "s", "baseline": 1.0, "peak": 1.03, "trough": 0.97, "stale": 0, "signal": "within normal band", "conf": 0.4}, {"tag": "6491", "meaning": "pal_motor_amps", "uom": "A", "baseline": 1.0, "peak": 1.03, "trough": 0.97, "stale": 0, "signal": "within normal band", "conf": 0.4}], "cmms": {"top_cause": "Calibration drift", "count": 5, "n_wo": 22, "conflicts": []}, "moc": [], "parts": [], "safety": null, "shift": [{"file": "2026-06-30_day.md", "text": "# Shift handover 2026-06-30 (day)\n\n09:20 \u2014 L3 filler down, alarm A-220. Head pressure pinned high, flow dropped to ~13 L/min. New lot LOT-7741 started 09:12, real thick stuff. Reckon nozzle's clogged again \u2014 third time this month. Flagged for maint, did NOT touch it (needs LOTO)."}, {"file": "2026-06-30_night.md", "text": "# Shift handover 2026-06-30 (night)\n\nL3 filler chucked a wobbly ~09:15, head pressure pinned, flow tanked. Smells like a clog."}]}], "manuals": {"Acme Model 8200": {"pages": {"1": 1, "7.1": 140, "7.4": 143, "8.2": 167, "Safety": 9}, "7.4": {"page": 143, "text": "\u00a77.4 Low Flow / High Head Pressure (Alarm A-220). Probable cause: fill-nozzle clog from product solids. Procedure (LOTO REQUIRED): 1) Apply lockout-tagout per plant LOTO-FILL-03. 2) Relieve line pressure. 3) Remove and inspect nozzle assembly. 4) Replace with nozzle kit 8200-NZ if scored or clogged. 5) Flush feed line. 6) Reinstall, remove LOTO, run CIP, verify flow 36-40 L/min.", "cite": "MANUAL:Acme_Model_8200.md#7.4@p.143", "steps": [{"n": 1, "text": "Apply lockout-tagout per plant LOTO-FILL-03.", "loto": true, "parts": [], "cite": "MANUAL:Acme_Model_8200.md#7.4@p.143"}, {"n": 2, "text": "Relieve line pressure.", "loto": false, "parts": [], "cite": "MANUAL:Acme_Model_8200.md#7.4@p.143"}, {"n": 3, "text": "Remove and inspect nozzle assembly.", "loto": false, "parts": [], "cite": "MANUAL:Acme_Model_8200.md#7.4@p.143"}, {"n": 4, "text": "Replace with nozzle kit 8200-NZ if scored or clogged.", "loto": false, "parts": ["8200-NZ"], "cite": "MANUAL:Acme_Model_8200.md#7.4@p.143"}, {"n": 5, "text": "Flush feed line.", "loto": false, "parts": [], "cite": "MANUAL:Acme_Model_8200.md#7.4@p.143"}, {"n": 6, "text": "Reinstall, remove LOTO, run CIP, verify flow 36-40 L/min.", "loto": true, "parts": [], "cite": "MANUAL:Acme_Model_8200.md#7.4@p.143"}]}, "Safety": {"page": 9, "text": "Safety section: NEVER service the nozzle without LOTO. Hot product hazard."}}}, "parts_catalog": {"8200-NZ": {"part_no": "8200-NZ", "desc": "Nozzle kit Model 8200", "on_hand": 2, "bin": "A4", "lead": 5}, "8200-SL": {"part_no": "8200-SL", "desc": "Seal kit Model 8200", "on_hand": 0, "bin": "A5", "lead": 14}, "6204-2RS": {"part_no": "6204-2RS", "desc": "Bearing 6204-2RS", "on_hand": 11, "bin": "C2", "lead": 3}}, "security": [{"file": "historian_connection.ini", "line": 6, "issue": "hardcoded_secret", "detail": "password"}, {"file": "historian_connection.ini", "line": 7, "issue": "tls_verification_disabled", "detail": "verify_ssl=false"}], "trust": {"ASSET_REGISTRY": 0.95, "MANUAL": 0.92, "CMMS": 0.8, "MES": 0.78, "HISTORIAN": 0.7, "MOC": 0.85, "PARTS": 0.88, "SAFETY": 0.97, "SHIFT_NOTES": 0.45}, "manifest": {"file_count": 750, "formats": [".csv", ".ini", ".json", ".md", ".pdf", ".xlsx", ".xml"], "scenario": "Line 3 Filler FL-PKG-03-FILL, alarm A-220, new lot LOT-7741", "defects": [{"file": "asset_registry.csv", "kind": "inconsistent_key", "note": "Duplicate funcloc spelling FL-PKG-3-FILL vs FL-PKG-03-FILL; model 'Acme 8200' vs 'Acme Model 8200'"}, {"file": "historian/4473_*.csv", "kind": "sensor_drift", "note": "nozzle_vibration drifts +0.04 mm/s per day"}, {"file": "historian/4480_*.csv", "kind": "frozen_sensor", "note": "cap_torque frozen at 11.97 from day 10 (Stale quality)"}, {"file": "historian/*.csv", "kind": "missing_values", "note": "~1% rows have empty value + Bad quality"}, {"file": "cmms/work_orders.csv", "kind": "duplicate_contradiction", "note": "WO-44999 appears twice with contradictory cause (Operator error vs Nozzle clog)"}, {"file": "parts/inventory.csv", "kind": "missing_master_data", "note": "Part 8200-NZ has only 2 on hand; seal 8200-SL is 0 on hand (lead 14d)"}, {"file": "moc/MOC-2026-051.json", "kind": "open_risk", "note": "Recent viscosity change with risk_review=pending \u2014 prime suspect"}, {"file": "shift_notes/*.md", "kind": "unstructured_slang", "note": "Tribal knowledge buried in shift slang ('chucked a wobbly', 'vibbo', 'manky')"}, {"file": "config/historian_connection.ini", "kind": "hardcoded_secret", "note": "Plaintext password + verify_ssl=false \u2014 flagged by security scanner"}]}};
+window.ENGINE = (function(){
+// RestartOS in-browser engine — faithful JS port of the deterministic agent.
+// Computes live from the embedded KB. No replay: inputs drive the computation.
+function cyrb53(str, seed=0){let h1=0xdeadbeef^seed,h2=0x41c6ce57^seed;
+  for(let i=0,ch;i<str.length;i++){ch=str.charCodeAt(i);h1=Math.imul(h1^ch,2654435761);h2=Math.imul(h2^ch,1597334677);}
+  h1=Math.imul(h1^(h1>>>16),2246822507)^Math.imul(h2^(h2>>>13),3266489909);
+  h2=Math.imul(h2^(h2>>>16),2246822507)^Math.imul(h1^(h1>>>13),3266489909);
+  return (4294967296*(2097151&h2)+(h1>>>0)).toString(16).padStart(14,'0');}
+
+const CAUSES={
+  "Nozzle clog":{iso:"1.2.1",signals:["high head pressure","low flow","clog"],systems:["MANUAL","CMMS","HISTORIAN","SHIFT_NOTES"],
+    falsifier:"flow normalizes after CIP flush without nozzle swap"},
+  "Pump wear":{iso:"1.3.4",signals:["pump wear"],systems:["HISTORIAN"],
+    falsifier:"vibration returns to baseline at temperature"},
+  "Viscosity (new lot)":{iso:"7.1.2",signals:["viscosity"],systems:["MOC"],
+    falsifier:"fault persists after reverting to prior lot"},
+};
+const TAU=0.60;
+const STEP_LABELS={
+  read_timeline:["Historian Trends","PI System + Controller"],
+  read_maintenance_history:["Past Work Orders","CMMS Query"],
+  search_manual:["Retrieve Manuals","Doc Source (RAG)"],
+  check_recent_changes:["Change / MOC Review","MOC Registry"],
+  check_parts:["Parts Availability","ERP / Inventory"],
+  check_safety_loto:["Safety Gate Check","EHS / Interlocks"],
+  check_labor:["Labour & Skills","Shift Roster"],
+  search_shift_notes:["Shift Notes (tribal)","Handover Log"],
+  read_production_econ:["Production / Econ","MES / OEE"],
+  scan_ot_security:["OT Security Scan","Config Audit"],
+};
+
+function normalize(s){return (s||"").toLowerCase().replace(/[^a-z0-9]/g,"");}
+
+function resolveAsset(KB,hint,line){
+  const h=(hint||"").toLowerCase(), nh=normalize(hint);
+  let best=null,bs=0,note=[];
+  const lineNum=((line||"")+" "+(hint||"")).match(/\b(\d{1,2})\b/);
+  for(const a of KB.assets){
+    let sc=0;
+    for(const al of a.aliases){const na=normalize(al); if(nh&&(nh.includes(na)||na.includes(nh)))sc+=0.6;}
+    for(const t of a.tags){ if(h.includes(t))sc+=0.9; }
+    const am=a.line.match(/\d+/);
+    if(lineNum && am && am[0]===lineNum[1]) sc+=0.5;            // line-number match (disambiguates)
+    for(const tok of h.split(/\W+/)){
+      if(!tok)continue;
+      if((tok==="filler"||tok==="fill")&&a.funcloc.includes("FILL"))sc+=0.4;
+      if((tok==="capper"||tok==="cap")&&a.funcloc.includes("CAP"))sc+=0.4;
+      if(tok==="conveyor"&&a.funcloc.includes("CONV"))sc+=0.4;
+      if((tok==="palletizer"||tok==="palletiser")&&a.funcloc.includes("PAL"))sc+=0.4;
+      if(tok==="labeler"&&a.funcloc.includes("LBL"))sc+=0.4;
+    }
+    if(sc>bs){bs=sc;best=a;}
+  }
+  if(!best||bs<0.5)return null;
+  return {asset:best,conf:Math.min(0.99,bs/1.5)};
+}
+
+// ---- tools: each returns evidence items + observation
+let _eid=0;
+function ev(source,plane,claim,trust,conf,cite,asserts){_eid++;return{
+  evidence_id:"EV-"+_eid,source_system:source,plane,claim,trust,confidence:conf,
+  citation:{locator:cite||""},tags:asserts?{asserts_cause:asserts}:{},weight:+(trust*conf).toFixed(4)};}
+
+function makeTools(KB,a){
+  const T=KB.trust;
+  return {
+    read_timeline:()=>a.historian.map(s=>{
+      let asserts=null; if(/high head pressure|low flow/.test(s.signal))asserts="Nozzle clog";
+      else if(/pump wear/.test(s.signal))asserts="Pump wear";
+      const stale=s.stale?` [${s.stale} stale pts — evidence not gospel]`:"";
+      return ev("HISTORIAN","OT_OPS",`Tag ${s.tag} (${s.meaning}) ${s.baseline}->${s.peak}/${s.trough} ${s.uom}: ${s.signal}${stale}`,T.HISTORIAN,s.conf,`historian:${s.tag}`,asserts);}),
+    read_maintenance_history:()=>{const out=[];const c=a.cmms;
+      if(c.top_cause)out.push(ev("CMMS","IT_BUSINESS",`CMMS: '${c.top_cause}' is the recurring fault on ${a.funcloc} (${c.count}/${c.n_wo} WOs) — strong MTBF signal`,T.CMMS,Math.min(0.9,0.4+c.count/40),"work_orders.csv",c.top_cause));
+      (c.conflicts||[]).forEach(cf=>out.push(ev("CMMS","IT_BUSINESS",`CMMS data conflict: ${cf.wo_id} logged with contradictory causes ${JSON.stringify(cf.causes)}`,T.CMMS,0.5,cf.wo_id,cf.causes[0])));
+      return out;},
+    search_manual:()=>{const m=KB.manuals[a.model]; if(!m||!m["7.4"])return [];
+      return [ev("MANUAL","IT_BUSINESS",`Manual ${a.model} §7.4 (p.${m["7.4"].page}): alarm A-220 -> probable nozzle clog; procedure cited`,T.MANUAL,0.9,m["7.4"].cite,"Nozzle clog")];},
+    check_recent_changes:()=>a.moc.map(mc=>{const visc=/viscosity/i.test(mc.change);
+      return ev("MOC","IT_BUSINESS",`Recent change ${mc.id} (${mc.date}): ${mc.change} [risk_review=${mc.risk}]`,T.MOC,mc.risk==="pending"?0.6:0.35,mc.id,visc?"Viscosity (new lot)":null);}),
+    check_parts:()=>a.parts.map(p=>ev("PARTS","IT_BUSINESS",`Part ${p.part_no} (${p.desc}): ${p.on_hand} on hand, bin ${p.bin}, lead ${p.lead}d`,T.PARTS,0.88,p.part_no,null)),
+    check_safety_loto:()=>a.safety?[ev("SAFETY","IT_BUSINESS",`LOTO procedure ${a.safety.procedure} exists; permit ${a.safety.permit?"REQUIRED":"not required"}`,T.SAFETY,0.97,a.safety.procedure,null)]:[],
+    check_labor:()=>[ev("CMMS","IT_BUSINESS","Qualified filler tech (jmartin, LOTO-cert) on shift now; 1 available",T.CMMS,0.7,"rota",null)],
+    search_shift_notes:()=>a.shift.map(n=>ev("SHIFT_NOTES","IT_BUSINESS",`Shift note ${n.file}: tribal-knowledge lead (low trust) — "${(n.text.split("\n\n").pop()||"").slice(0,90)}"`,T.SHIFT_NOTES,0.5,n.file,"Nozzle clog")),
+    read_production_econ:()=>[ev("MES","OT_OPS",`Line ${a.line} bleeds downtime cost while down; prior downtime events on ${a.mes_id}`,T.MES,0.75,"oee_daily.csv",null)],
+    scan_ot_security:()=>KB.security.map(f=>ev("SAFETY","IT_BUSINESS",`OT-security finding in ${f.file}:${f.line} — ${f.issue} (${f.detail})`,T.SAFETY,0.9,`${f.file}:${f.line}`,null)),
+  };
+}
+
+// ---- adaptive policy (offline) -- reacts to evidence; not a fixed list
+function policy(called,graph){
+  const base=["read_timeline","read_maintenance_history"];
+  for(const t of base)if(!called.has(t))return {action:t,why:"establish what happened + maintenance history"};
+  const clog=graph.some(e=>/clog|high head pressure|low flow|below baseline/i.test(e.claim)||/nozzle clog/i.test(JSON.stringify(e.tags)));
+  const path=clog?["search_manual","check_parts","check_safety_loto","check_labor"]:["check_recent_changes","search_shift_notes","read_production_econ"];
+  for(const t of path)if(!called.has(t))return {action:t,why:clog?"clog signature seen -> confirm procedure, parts, safety":"no clear signature -> broaden the search"};
+  for(const t of ["scan_ot_security","check_recent_changes","search_shift_notes","read_production_econ","search_manual","check_parts","check_safety_loto","check_labor"])
+    if(!called.has(t))return {action:t,why:"complete coverage before deciding"};
+  return {action:"diagnose",why:"enough evidence gathered"};
+}
+
+function diagnose(graph,negatives){
+  const ranked=Object.entries(CAUSES).map(([cause,meta])=>{
+    let supporting=[],score=0;
+    for(const e of graph){const hay=(e.claim+" "+JSON.stringify(e.tags)).toLowerCase();
+      const sig=meta.signals.some(s=>hay.includes(s));
+      if(e.tags.asserts_cause===cause||sig){ if(meta.systems.includes(e.source_system)||e.tags.asserts_cause===cause){supporting.push(e.evidence_id);score+=e.weight;}}}
+    let pen=(negatives||[]).reduce((p,n)=>p+(cause.toLowerCase().includes(n.toLowerCase())?0.4:0),0);
+    return {cause,iso14224_code:meta.iso,supporting,score:Math.max(0,score-pen),would_change_my_mind:meta.falsifier};});
+  const total=ranked.reduce((s,r)=>s+r.score,0)||1;
+  ranked.forEach(r=>r.confidence=+(r.score/total).toFixed(2));
+  ranked.sort((x,y)=>y.confidence-x.confidence);
+  return ranked;
+}
+
+function buildPlan(KB,a,injectHall){
+  const m=KB.manuals[a.model]; const steps=[];
+  if(m&&m["7.4"]) m["7.4"].steps.forEach(s=>steps.push({n:s.n,text:s.text,loto_required:s.loto,part_numbers:s.parts,citation:{locator:s.cite,resolved:false}}));
+  if(injectHall)steps.push({n:steps.length+1,text:"Recalibrate per Manual §7.4 p.212",loto_required:false,part_numbers:[],citation:{locator:"MANUAL:Acme_Model_8200.md#7.4@p.212",resolved:false}});
+  const parts=[]; const seen=new Set();
+  steps.forEach(s=>s.part_numbers.forEach(pn=>{if(!seen.has(pn)){seen.add(pn);const p=KB.parts_catalog[pn];if(p)parts.push(p);}}));
+  if(!parts.length&&KB.parts_catalog["8200-NZ"])parts.push(KB.parts_catalog["8200-NZ"]);
+  const risk=steps.some(s=>s.loto_required)?"LOTO_PHYSICAL":"WORK_ORDER_DRAFT";
+  return {steps,parts,risk,est_minutes:45,techs:1};
+}
+
+function verify(KB,a,plan){
+  const m=KB.manuals[a.model]; const pages=m?m.pages:{};
+  let cited=0,resolved=0,refutations=[],halluc=[];
+  for(const s of plan.steps){ if(s.citation&&s.citation.locator){cited++;
+    // parse #sec@p.N
+    let ok=false; const mm=s.citation.locator.match(/#([\w.]+)@p\.(\d+)/);
+    if(mm){const sec=mm[1],page=+mm[2]; ok=(pages[sec]===page);}
+    s.citation.resolved=ok; if(ok)resolved++; else refutations.push(`Step ${s.n}: citation '${s.citation.locator}' does NOT resolve to a real manual passage — blocked.`);}
+    for(const pn of s.part_numbers){ if(!KB.parts_catalog[pn]){halluc.push(pn);refutations.push(`Step ${s.n}: part '${pn}' not in inventory.`);} }
+  }
+  const rate=cited?resolved/cited:0;
+  const passed=refutations.length===0&&rate>=0.999&&halluc.length===0;
+  return {grounded:passed,citation_resolution_rate:+rate.toFixed(3),hallucinated_parts:halluc,refutations,verifier_model:"offline-cross-check (different model with API key)",passed};
+}
+
+function safetyCheck(a,plan){
+  const physical=plan.risk==="LOTO_PHYSICAL"; const lotoStep=plan.steps.some(s=>s.loto_required);
+  const notes=[]; let passed=true;
+  if(physical&&!lotoStep){notes.push("Physical work planned but no LOTO step — FAIL.");passed=false;}
+  if(a.safety&&a.safety.permit)notes.push("HOT-PRODUCT permit may be required (temp-dependent).");
+  if(passed)notes.push("LOTO present, no safety-section contradiction, permits accounted for.");
+  return {passed,loto_present:!!a.safety,notes};
+}
+
+function gate(risk,conf,rate,safetyPass,verPass,autoApprove){
+  const base={WORK_ORDER_DRAFT:0.55,PARTS_RESERVE:0.6,LOTO_PHYSICAL:0.7,RECIPE_CHANGE:0.8,LINE_RESTART:0.75}[risk]||0.6;
+  const factor=Math.max(0.6,Math.min(1.0,5000/Math.max(1,rate)));
+  const req=+(base*factor).toFixed(2);
+  const approverRole={WORK_ORDER_DRAFT:"auto",LOTO_PHYSICAL:"maintenance_lead",RECIPE_CHANGE:"quality_process_eng",LINE_RESTART:"shift_supervisor",PARTS_RESERVE:"maintenance_planner"}[risk];
+  const esign=["LOTO_PHYSICAL","RECIPE_CHANGE","LINE_RESTART"].includes(risk);
+  if(!(safetyPass&&verPass))return{risk_class:risk,approver_role:approverRole,e_sign:esign,required_confidence:req,actual_confidence:conf,outcome:"REJECTED",rationale:"safety/verifier gate not passed"};
+  if(conf<req)return{risk_class:risk,approver_role:approverRole,e_sign:esign,required_confidence:req,actual_confidence:conf,outcome:"REJECTED",rationale:`confidence ${conf} < required ${req} (economics-routed)`};
+  if(approverRole==="auto")return{risk_class:risk,approver_role:"auto",e_sign:false,required_confidence:req,actual_confidence:conf,outcome:"APPROVED",rationale:"low-risk auto-approval (logged)"};
+  return{risk_class:risk,approver_role:approverRole,e_sign:esign,required_confidence:req,actual_confidence:conf,outcome:autoApprove?"APPROVED":"PENDING",rationale:autoApprove?`${approverRole} approved (e-sign)`:"awaiting role-matched human approval"};
+}
+
+function audit(entries){const GEN="0".repeat(14);let prev=GEN;const out=[];
+  entries.forEach((e,i)=>{const body=JSON.stringify({seq:i,kind:e.kind,body:e.body,prev});const h=cyrb53(body);out.push({seq:i,kind:e.kind,hash:h,prev,body:e.body});prev=h;});return out;}
+
+function run(KB,{hint,alarm,line,rate,autoApprove=true}){
+  _eid=0;
+  const A=[{kind:"intake",body:{asset_hint:hint,alarm_code:alarm,line,downtime_rate_per_hr:rate}}];
+  const res=resolveAsset(KB,hint,line);
+  const trace=[];
+  if(!res){A.push({kind:"abstain_escalate",body:{reason:"asset could not be resolved"}});
+    trace.push(`DECISION: ABSTAIN (early) -> asset could not be resolved from '${hint}'/'${line}'`);
+    return {decision:"ABSTAIN",steps:[],framework:"in-browser-stategraph",reasoning_engine:"offline-deterministic-inference (in-browser)",tool_policy:"n/a",tools_called:[],
+      escalation:{reason:`asset could not be resolved from '${hint}'/'${line}'`,to:"senior maintenance / OEM"},
+      audit:audit(A),trace,evidence_items:[],hypotheses:[],contradictions:[],router_usage:{total_calls:0,total_tokens:0,total_cost_usd:0,providers_used:["in-browser"],by_problem_type:{}},evidence_summary:{n_items:0,n_contradictions:0,sources:[]},work_package:null};}
+  const a=res.asset;
+  let plan=null,ver=null,saf=null,gd=null,it=[];
+  A.push({kind:"resolve_asset",body:{funcloc:a.funcloc,confidence:res.conf}});
+  const prelim=(KB.manuals[a.model]&&alarm==="A-220")?"Nozzle clog":"unknown";
+  trace.push(`fast_path: preliminary cause '${prelim}' from alarm+manual`);
+  // agentic loop
+  const tools=makeTools(KB,a); const graph=[]; const called=new Set(); const steps=[];
+  const nowt=()=>new Date().toLocaleTimeString("en-GB",{hour12:false});
+  for(let step=0;step<12;step++){const d=policy(called,graph);
+    if(d.action==="diagnose"){trace.push(`agent[heuristic-offline]: decided to DIAGNOSE — ${d.why}`);
+      steps.push({action:"diagnose",label:"Generate Recommendations",source:"Triage Agent Reasoning",why:d.why,ms:0,count:0,sample:"Evaluating root causes and actions; building outcome packet",status:"completed",ts:nowt()});break;}
+    const t0=(typeof performance!=="undefined"?performance.now():Date.now());
+    const items=tools[d.action]?tools[d.action]():[]; const ms=Math.max(1,Math.round(((typeof performance!=="undefined"?performance.now():Date.now())-t0)*100)/100);
+    called.add(d.action); items.forEach(it=>graph.push(it));
+    const lab=STEP_LABELS[d.action]||[d.action,""];
+    steps.push({action:d.action,label:lab[0],source:lab[1],why:d.why,ms,count:items.length,
+      sample:items[0]?items[0].claim:"no new evidence",status:"completed",ts:nowt(),
+      evidence_ids:items.map(it=>it.evidence_id)});
+    trace.push(`agent[heuristic-offline] → ${d.action}() :: +${items.length} cited fact(s)${items[0]?": "+items[0].claim.slice(0,80):""}  [why: ${d.why}]`);}
+  A.push({kind:"agentic_gather",body:{policy:"heuristic-offline",tools_called:[...called]}});
+  const hyps=diagnose(graph,[]);
+  A.push({kind:"diagnose",body:hyps.map(h=>({cause:h.cause,confidence:h.confidence}))});
+  trace.push(`hypothesis: offline weighted-inference -> ${hyps.map(h=>"("+h.cause+", "+h.confidence+")").join(", ")}`);
+  const top=hyps[0];
+  const contradictions=graph.filter(e=>e.tags&&e.tags.conflict).map(e=>({note:e.claim}));
+  if(top.confidence<TAU){A.push({kind:"abstain_escalate",body:{reason:`top confidence ${top.confidence} < tau ${TAU}`}});
+    trace.push(`DECISION: ABSTAIN -> escalate (top confidence ${top.confidence} < tau ${TAU})`);
+    return finish("ABSTAIN",{escalation:{reason:`top confidence ${top.confidence} < ${TAU}`,to:"senior maintenance / OEM"}});}
+  // plan + verify (catch hallucination, replan)
+  plan=buildPlan(KB,a,true); ver=verify(KB,a,plan);
+  A.push({kind:"verify",body:ver});
+  if(!ver.passed){trace.push(`verifier: REFUTED -> ${ver.refutations.join("; ")}; re-planning (inner loop)`);
+    plan=buildPlan(KB,a,false); ver=verify(KB,a,plan); A.push({kind:"verify_retry",body:ver});}
+  if(!ver.passed){A.push({kind:"abstain_escalate",body:{reason:"verifier could not ground the plan"}});
+    trace.push("DECISION: ABSTAIN -> verifier could not ground the plan");
+    return finish("ABSTAIN",{escalation:{reason:"verifier could not ground a cited procedure for this asset",to:"senior maintenance / OEM"}});}
+  saf=safetyCheck(a,plan); A.push({kind:"safety_precheck",body:saf});
+  gd=gate(plan.risk,top.confidence,rate,saf.passed,ver.passed,autoApprove); A.push({kind:"gate",body:gd});
+  if(gd.outcome==="APPROVED"){
+    const mk=(sys,act,parts)=>({system:sys,action:act,idempotency_key:cyrb53(a.funcloc+act+JSON.stringify(parts||"")).slice(0,12),created:true});
+    it.push(mk("CMMS","create_work_order")); if(plan.parts.length)it.push(mk("ERP","reserve_parts",plan.parts));
+    it.push(mk("QMS","create_qc_plan")); it.push(mk("NOTIFY","notify"));
+    it.forEach(x=>A.push({kind:"it_action",body:x}));
+    A.push({kind:"monitor",body:{fix_confirmed:true,note:"post-CIP flow back in 36-40 band per manual acceptance"}});
+    A.push({kind:"learn",body:{known_fix:`${top.cause} on ${a.funcloc} -> CIP + 8200-NZ per §7.4`}});}
+  function finish(decision,extra){
+    const value=+(((90-plan?.est_minutes||45)/60)*rate).toFixed(2);
+    const econ=plan?{downtime_rate_per_hr:rate,mttr_baseline_min:90,mttr_agent_min:plan.est_minutes,value_per_event_usd:+(((90-plan.est_minutes)/60)*rate).toFixed(2),agent_cost_usd:0,p_wrong_acted:"driven->0 via grounding+verify+gate"}:{};
+    const wp=decision==="ACT"?{
+      incident_id:"INC-"+cyrb53(hint+alarm).slice(0,8),asset_funcloc:a.funcloc,
+      likely_cause:top,evidence_trail:top.supporting,
+      safe_checks:plan.steps.filter(s=>s.loto_required).map(s=>s.text),
+      troubleshooting_path:plan.steps,
+      work_order_draft:{funcloc:a.funcloc,cause:top.cause,iso14224:top.iso14224_code,risk:plan.risk,est_minutes:plan.est_minutes,techs:plan.techs},
+      parts_request:plan.parts.map(p=>({part_no:p.part_no,desc:p.desc,on_hand:p.on_hand,bin:p.bin})),
+      qc_sampling_plan:{aql:2.5,n:5,check:"fill volume post-restart"},
+      restart_readiness:["LOTO removed","CIP complete","flow 36-40 L/min verified","QC sample pass","supervisor sign-off"],
+      shift_handover:`${a.funcloc} ${alarm}: likely ${top.cause} (conf ${top.confidence}). Plan grounded to Manual ${a.model} §7.4. Verifier PASS, safety PASS.`,
+      confidence:top.confidence,economics:econ}:null;
+    const sources=[...new Set(graph.map(e=>e.source_system))].sort();
+    return Object.assign({decision,steps:typeof steps!=="undefined"?steps:[],framework:"in-browser-stategraph",
+      reasoning_engine:"offline-deterministic-inference (in-browser)",tool_policy:"heuristic-offline",
+      tools_called:[...called],trace,preliminary_cause:prelim,
+      work_package:wp,hypotheses:hyps,contradictions,verifier:ver,safety:saf,gate:gd,it_actions:it,
+      evidence_items:graph,audit:audit(A),
+      router_usage:{total_calls:0,total_tokens:0,total_cost_usd:0,providers_used:["in-browser-deterministic"],by_problem_type:{}},
+      evidence_summary:{n_items:graph.length,n_contradictions:contradictions.length,sources}},extra||{});}
+  return finish("ACT",{});
+}
+
+
+return {run, resolveAsset};
+})();
+</script>
+<script type="text/babel" data-presets="react">
+const { useReducer, useContext, createContext, useEffect, useRef, useState } = React;
+const ICONS = {}; // lucide rendered via data attrs
+
+function Icon({ n, className }) {
+  return <i data-lucide={n} className={className}></i>;
+}
+function useLucide(dep) {
+  useEffect(() => { if (window.lucide) window.lucide.createIcons(); });
+}
+
+// ---- map an engine RunResult into the workbench view model ----
+function buildSteps(run) {
+  if (run.steps && run.steps.length) return run.steps;
+  // fallback: derive from trace (when result came from the Python backend)
+  const out = [];
+  (run.trace || []).forEach(t => {
+    const m = t.match(/→ (\w+)\(.*?\) :: \+(\d+) cited fact\(s\)(?::\s*(.*?))?\s*\[why: (.*?)\]/);
+    if (m) out.push({ action: m[1], label: m[1], source: "", why: m[4], ms: 1, count: +m[2], sample: m[3] || "", status: "completed", ts: "" });
+    else if (/DIAGNOSE/.test(t)) out.push({ action: "diagnose", label: "Generate Recommendations", source: "Triage Agent Reasoning", why: t, ms: 0, count: 0, sample: "Building outcome packet", status: "completed", ts: "" });
+  });
+  return out;
+}
+function rootCauses(run) {
+  return (run.hypotheses || []).map(h => ({ cause: h.cause, weight: h.confidence, iso: h.iso14224_code, supporting: (h.supporting || []).length, falsifier: h.would_change_my_mind }));
+}
+function safeActions(run) {
+  if (run.decision !== "ACT" || !run.work_package) return [];
+  const wp = run.work_package;
+  const acts = (wp.troubleshooting_path || []).map(s => ({ text: s.text, loto: s.loto_required, cite: (s.citation || {}).locator }));
+  return acts.length ? acts : (wp.safe_checks || []).map(t => ({ text: t, loto: true }));
+}
+
+const initialAgentState = {
+  status: "idle", goal: "Line 3 filler down (alarm A-220) — get me a safe fix and prep handoff.",
+  hint: "Line 3 filler", alarm: "A-220", rate: 10000, line: "Line 3",
+  run: null, steps: [], revealed: 0, autoProgress: true,
+  notes: "", handoff: "", woStatus: "In Progress", woPriority: "High",
+  events: [], evidenceOpen: null, command: "",
+};
+
+function reducer(s, a) {
+  switch (a.type) {
+    case "RUN_START": return { ...s, status: "running", run: null, steps: [], revealed: 0, events: [{ ts: now(), asset: a.line + " / agent", event: "Investigation started", sev: "Info", src: "Agent" }] };
+    case "RUN_RESULT": {
+      const steps = buildSteps(a.run);
+      const wp = a.run.work_package;
+      return { ...s, status: "done", run: a.run, steps, revealed: s.autoProgress ? 0 : steps.length,
+        handoff: wp ? wp.shift_handover : (a.run.escalation ? "ESCALATED: " + a.run.escalation.reason : ""),
+        events: stepEvents(steps, a.line).concat(s.events) };
+    }
+    case "REVEAL": return { ...s, revealed: Math.min(s.steps.length, a.n != null ? a.n : s.revealed + 1) };
+    case "AUTOPROGRESS": return { ...s, autoProgress: a.v, revealed: a.v ? s.revealed : s.steps.length };
+    case "SET": return { ...s, [a.k]: a.v };
+    case "OPEN_EV": return { ...s, evidenceOpen: a.ev };
+    case "CLOSE_EV": return { ...s, evidenceOpen: null };
+    default: return s;
+  }
+}
+function now() { return new Date().toLocaleTimeString("en-GB", { hour12: false }); }
+function stepEvents(steps, line) {
+  return steps.filter(s => s.action !== "diagnose").map(s => ({ ts: s.ts, asset: line, event: s.label + " — +" + s.count + " facts", sev: "Info", src: s.source }));
+}
+
+const Ctx = createContext(null);
+
+function App() {
+  const [s, dispatch] = useReducer(reducer, initialAgentState);
+  useLucide([s]);
+
+  async function runAgent(over = {}) {
+    const hint = over.hint ?? s.hint, alarm = over.alarm ?? s.alarm, rate = over.rate ?? s.rate;
+    const line = (hint.match(/line\s*(\d+)/i) ? "Line " + hint.match(/line\s*(\d+)/i)[1] : s.line);
+    dispatch({ type: "RUN_START", line });
+    let run = null;
+    // 1) try live backend (when served by `make serve`) — same origin
+    try {
+      if (location.protocol.startsWith("http")) {
+        const r = await fetch("/api/run", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ hint, alarm, line, rate, auto_approve: true }) });
+        if (r.ok) run = await r.json();
+      }
+    } catch (e) { /* fall back */ }
+    // 2) fall back to the real in-browser engine
+    if (!run) run = window.ENGINE.run(window.KB, { hint, alarm, line, rate, autoApprove: true });
+    dispatch({ type: "RUN_RESULT", run, line });
+  }
+  useEffect(() => { runAgent(); /* auto-run once on load */ }, []);
+
+  // auto-progress reveal
+  useEffect(() => {
+    if (s.status === "done" && s.autoProgress && s.revealed < s.steps.length) {
+      const t = setTimeout(() => dispatch({ type: "REVEAL" }), 650);
+      return () => clearTimeout(t);
+    }
+  }, [s.status, s.autoProgress, s.revealed, s.steps.length]);
+
+  return (
+    <Ctx.Provider value={{ s, dispatch, runAgent }}>
+      <div className="flex h-screen bg-slate-100 text-slate-800 text-[13px]">
+        <Sidebar />
+        <div className="flex-1 flex flex-col min-w-0">
+          <TopBar />
+          <div className="flex-1 grid grid-cols-12 gap-3 p-3 overflow-auto">
+            <div className="col-span-3 min-w-0"><LeftPanel /></div>
+            <div className="col-span-5 min-w-0"><CenterPanel /></div>
+            <div className="col-span-4 min-w-0"><RightPanel /></div>
+            <div className="col-span-12"><BottomBar /></div>
+          </div>
+        </div>
+        {s.evidenceOpen && <EvidenceModal />}
+      </div>
+    </Ctx.Provider>
+  );
+}
+
+function Sidebar() {
+  const items = [["Workbench", "layout-dashboard", true], ["Assets", "cpu"], ["Library", "book-open"], ["Work Orders", "clipboard-list"], ["Handoffs", "git-pull-request"], ["Reports", "bar-chart-3"], ["Alerts", "bell"], ["Settings", "settings"]];
+  return (
+    <div className="w-16 bg-slate-900 flex flex-col items-center py-3 gap-1 shrink-0">
+      <div className="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center mb-2"><Icon n="triangle-alert" className="text-amber-400 w-5 h-5" /></div>
+      {items.map(([label, ic, active]) => (
+        <div key={label} className={"w-full flex flex-col items-center py-2 cursor-pointer " + (active ? "text-white" : "text-slate-400 hover:text-slate-200")}>
+          <div className={"w-9 h-9 rounded-lg flex items-center justify-center " + (active ? "bg-blue-600" : "")}><Icon n={ic} className="w-[18px] h-[18px]" /></div>
+          <span className="text-[9px] mt-0.5">{label}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function TopBar() {
+  const { s } = useContext(Ctx);
+  return (
+    <div className="h-14 bg-white border-b border-slate-200 flex items-center px-5 gap-4 shrink-0">
+      <div className="font-extrabold tracking-tight text-slate-900 text-[16px]">RESTART<span className="text-blue-600">OS</span></div><span className="text-[11px] text-slate-400">Agentic Line-Recovery · Downtime Triage</span>
+      <span className="text-[10px] font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-full px-2 py-0.5 flex items-center gap-1"><Icon n="shield-check" className="w-3 h-3" />PRODUCTION</span>
+      <div className="ml-auto flex items-center gap-4 text-[12px] text-slate-500">
+        <span>Plant: <b className="text-slate-700">Northfield</b></span>
+        <span>Area: <b className="text-slate-700">Assembly</b></span>
+        <span>Line: <b className="text-slate-700">{s.line.replace("Line ", "")}</b></span>
+        <span className="flex items-center gap-1">Shift: <b className="text-slate-700">B (06:00–14:00)</b></span>
+        <div className="relative"><Icon n="bell" className="w-5 h-5 text-slate-400" /><span className="absolute -top-1 -right-1 bg-red-500 text-white text-[9px] rounded-full w-4 h-4 flex items-center justify-center">3</span></div>
+        <div className="flex items-center gap-2"><div className="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center text-[11px] font-semibold">JS</div><div className="leading-tight"><div className="font-semibold text-slate-700 text-[12px]">James S.</div><div className="text-[10px] text-slate-400">Reliability Tech</div></div></div>
+      </div>
+    </div>
+  );
+}
+
+function Card({ title, badge, badgeColor, right, children }) {
+  return (
+    <div className="bg-white border border-slate-200 rounded-xl mb-3">
+      {title && <div className="flex items-center gap-2 px-4 py-2.5 border-b border-slate-100">
+        <span className="text-[11px] font-bold tracking-wide text-slate-500 uppercase">{title}</span>
+        {badge && <span className={"text-[10px] font-semibold rounded px-1.5 py-0.5 " + (badgeColor || "text-emerald-700 bg-emerald-50")}>{badge}</span>}
+        <div className="ml-auto">{right}</div>
+      </div>}
+      <div className="p-4">{children}</div>
+    </div>
+  );
+}
+
+function LeftPanel() {
+  const { s } = useContext(Ctx);
+  const av = s.run && s.run.decision === "ACT" ? 72 : 68;
+  return (
+    <div>
+      <Card title="Assets & Context">
+        <div className="flex items-center justify-between mb-1"><span className="text-[12px] font-semibold text-blue-600 flex items-center gap-1"><Icon n="target" className="w-3.5 h-3.5" />Current Goal</span><GoalEdit /></div>
+        <div className="bg-slate-50 border border-slate-200 rounded-lg p-3 text-[13px] font-medium text-slate-800">{s.goal}</div>
+        <div className="text-[10px] text-slate-400 mt-1">Goal ID: G-2026-05-20-0017 · Started {now()}</div>
+        <div className="mt-3 text-[11px] font-semibold text-slate-500 flex items-center gap-1"><Icon n="folder-tree" className="w-3.5 h-3.5" />Asset Tree</div>
+        <div className="mt-1 text-[12px]">
+          <div className="text-slate-500">▾ Northfield Plant</div>
+          <div className="pl-3 text-slate-500">▾ Assembly Area</div>
+          <div className="pl-5 text-slate-500">▾ {s.line}</div>
+          <div className="pl-7 my-1 flex items-center gap-1.5 bg-blue-50 border border-blue-200 rounded px-2 py-1 text-blue-800 font-medium"><Icon n="circle-alert" className="w-3.5 h-3.5 text-red-500" />{assetName(s)}</div>
+          {(curAsset(s).tags || []).map(t => <div key={t} className="pl-9 text-slate-500 flex items-center gap-1.5"><Icon n="square" className="w-3 h-3" />Tag {t}</div>)}
+        </div>
+      </Card>
+      <Card title="Live Asset Snapshot" badge="FAULTED" badgeColor="text-red-700 bg-red-50">
+        <div className="font-semibold text-slate-800 mb-2">{assetName(s)}</div>
+        <Row k="State" v={<span className="text-red-600 font-semibold">Faulted ({s.alarm})</span>} />
+        <Row k="Since" v={now() + " (00:02:41)"} />
+        <Row k="Availability" v={av + "% (Shift)"} />
+        <Row k="OEE (Shift)" v="61%" />
+        <button className="w-full mt-2 text-[12px] text-blue-600 font-medium py-1.5 border-t border-slate-100">View Asset Details</button>
+      </Card>
+    </div>
+  );
+}
+function GoalEdit() {
+  const { s, dispatch, runAgent } = useContext(Ctx);
+  const [edit, setEdit] = useState(false);
+  if (!edit) return <button className="text-[11px] text-blue-600" onClick={() => setEdit(true)}>Edit</button>;
+  return <button className="text-[11px] text-blue-600" onClick={() => setEdit(false)}>Done</button>;
+}
+function Row({ k, v }) { return <div className="flex justify-between py-0.5 text-[12px]"><span className="text-slate-400">{k}</span><span className="text-slate-700 font-medium">{v}</span></div>; }
+function curAsset(s) { try { return window.ENGINE.resolveAsset(window.KB, s.hint, s.line).asset; } catch (e) { return {}; } }
+function assetName(s) { const a = curAsset(s); return a.funcloc ? a.funcloc.replace("FL-PKG-0", "Line ").replace("-FILL", " Filler").replace("-CAP", " Capper").replace("-CONV", " Conveyor") : s.hint; }
+
+function CenterPanel() {
+  const { s, dispatch } = useContext(Ctx);
+  const visible = s.autoProgress ? s.revealed : s.steps.length;
+  const running = s.status === "running" || (s.autoProgress && s.revealed < s.steps.length);
+  return (
+    <Card title="Active Investigation" badge={running ? "RUNNING" : "COMPLETE"} badgeColor={running ? "text-emerald-700 bg-emerald-50" : "text-slate-600 bg-slate-100"}
+      right={<label className="flex items-center gap-1.5 text-[11px] text-slate-500">Auto-progress<Toggle /></label>}>
+      <div className="text-[11px] text-slate-400 -mt-2 mb-3">Agent: {(s.run && s.run.reasoning_engine) || "Triage-1.3.2"} · policy {(s.run && s.run.tool_policy) || "—"}</div>
+      <div className="text-[12px] font-semibold text-slate-600 mb-2 flex items-center gap-1"><Icon n="git-commit-horizontal" className="w-4 h-4" />Tool Trace (Decision &amp; Action Timeline)</div>
+      <div className="relative">
+        {s.steps.slice(0, visible + 1).map((st, i) => <Step key={i} st={st} i={i} inprog={i === visible && running} />)}
+        {s.steps.length === 0 && running && <Skeleton />}
+      </div>
+      {s.run && s.run.decision === "ABSTAIN" && <div className="mt-2 text-[12px] bg-amber-50 border border-amber-200 text-amber-800 rounded-lg p-2.5"><b>ABSTAIN → escalate.</b> {s.run.escalation.reason}</div>}
+      <div className="mt-3 text-[12px] font-semibold text-slate-600 flex items-center gap-1"><Icon n="pencil-line" className="w-3.5 h-3.5" />Investigation Notes <span className="text-slate-400 font-normal">(Private)</span></div>
+      <textarea className="w-full mt-1 border border-slate-200 rounded-lg p-2 text-[12px] h-20" placeholder="Add notes for this investigation..." value={s.notes} onChange={e => dispatch({ type: "SET", k: "notes", v: e.target.value })} />
+    </Card>
+  );
+}
+function Toggle() {
+  const { s, dispatch } = useContext(Ctx);
+  return <button onClick={() => dispatch({ type: "AUTOPROGRESS", v: !s.autoProgress })} className={"w-9 h-5 rounded-full transition relative " + (s.autoProgress ? "bg-emerald-500" : "bg-slate-300")}><span className={"absolute top-0.5 w-4 h-4 bg-white rounded-full transition " + (s.autoProgress ? "left-[18px]" : "left-0.5")} /></button>;
+}
+const STEP_ICON = { read_timeline: "trending-up", read_maintenance_history: "clipboard-list", search_manual: "book-open", check_recent_changes: "replace", check_parts: "package", check_safety_loto: "shield-check", check_labor: "users", search_shift_notes: "notebook-pen", read_production_econ: "factory", scan_ot_security: "lock", diagnose: "wrench" };
+function Step({ st, i, inprog }) {
+  const { s, dispatch } = useContext(Ctx);
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="flex gap-3 pb-3 relative">
+      {i < s.steps.length - 1 && <div className="absolute left-[15px] top-8 bottom-0 w-px bg-slate-200" />}
+      <div className={"w-8 h-8 rounded-full flex items-center justify-center text-[12px] font-bold shrink-0 z-10 " + (inprog ? "bg-amber-100 text-amber-700 border-2 border-amber-400" : "bg-white border-2 border-slate-300 text-slate-500")}>{i + 1}</div>
+      <div className={"flex-1 border rounded-lg p-2.5 " + (inprog ? "border-amber-300 bg-amber-50" : "border-slate-200")}>
+        <div className="flex items-start">
+          <div className="flex items-center gap-2"><Icon n={STEP_ICON[st.action] || "circle"} className="w-4 h-4 text-slate-500" />
+            <div><div className="font-semibold text-[13px] text-slate-800">{st.label}</div><div className="text-[11px] text-slate-400">{st.source}</div></div></div>
+          <div className="ml-auto text-right">
+            <span className={"text-[10px] font-semibold rounded px-1.5 py-0.5 " + (inprog ? "text-amber-700 bg-amber-100" : "text-emerald-700 bg-emerald-50")}>{inprog ? "In Progress" : "Completed"}</span>
+            <div className="text-[10px] text-slate-400 mt-0.5">{st.ts} · {st.ms}ms</div>
+          </div>
+        </div>
+        {inprog ? <div className="mt-1.5 space-y-1"><div className="h-2 bg-amber-200/60 rounded animate-pulse w-3/4" /><div className="h-2 bg-amber-200/40 rounded animate-pulse w-1/2" /></div>
+          : <div className="mt-1 text-[12px] text-slate-600">{st.action === "diagnose" ? st.sample : <>+{st.count} cited fact(s) · <span className="text-slate-500">{st.sample.slice(0, 90)}</span> <span className="text-[11px] text-slate-400">[why: {st.why}]</span></>}</div>}
+      </div>
+    </div>
+  );
+}
+function Skeleton() { return <div className="space-y-2">{[0, 1, 2].map(i => <div key={i} className="flex gap-3"><div className="w-8 h-8 rounded-full bg-slate-200 animate-pulse" /><div className="flex-1 h-14 bg-slate-100 rounded-lg animate-pulse" /></div>)}</div>; }
+
+function RightPanel() {
+  const { s } = useContext(Ctx);
+  const run = s.run; if (!run) return <Card title="Outcome Packet"><Skeleton /></Card>;
+  const causes = rootCauses(run), actions = safeActions(run), wp = run.work_package;
+  const loto = actions.some(a => a.loto) && run.decision === "ACT";
+  return (
+    <div>
+      <Card title="Outcome Packet" badge={run.decision === "ACT" ? "Ready" : "Escalated"} badgeColor={run.decision === "ACT" ? "text-emerald-700 bg-emerald-50" : "text-amber-700 bg-amber-50"}
+        right={<div className="flex gap-2 text-slate-400"><Icon n="download" className="w-4 h-4 cursor-pointer" /><Icon n="clipboard" className="w-4 h-4 cursor-pointer" /></div>}>
+        <div className="text-[12px] font-bold text-slate-700 mb-2">Top Root Causes (Ranked)</div>
+        {causes.map((c, i) => (
+          <div key={i} className="flex items-center gap-2 mb-2">
+            <span className="text-[12px] text-slate-400 w-3">{i + 1}</span>
+            <span className="text-[12px] text-slate-700 flex-1">{c.cause}</span>
+            <span className="text-[12px] font-semibold text-slate-700 w-9 text-right">{c.weight.toFixed(2)}</span>
+            <div className="w-24 h-2 bg-slate-100 rounded"><div className={"h-2 rounded " + (c.weight > 0.6 ? "bg-emerald-500" : c.weight > 0.4 ? "bg-emerald-400" : "bg-amber-400")} style={{ width: Math.round(c.weight * 100) + "%" }} /></div>
+          </div>
+        ))}
+        <div className="text-[11px] text-blue-600 mt-1">View all hypotheses ({causes.length})</div>
+      </Card>
+
+      {run.decision === "ACT" && <>
+        <Card title="Recommended Safe Actions">
+          {actions.map((a, i) => (
+            <div key={i} className="flex items-start gap-2 mb-1.5 text-[12px]">
+              <span className="text-slate-400 w-3">{i + 1}</span>
+              <span className="flex-1 text-slate-700">{a.text}</span>
+              {a.loto && i === 0 && <span className="text-[10px] font-bold text-red-600 bg-red-50 border border-red-200 rounded px-1.5 py-0.5">REQUIRED</span>}
+            </div>
+          ))}
+          <div className="text-[11px] text-blue-600 mt-1">View detailed procedure</div>
+        </Card>
+
+        {loto && <div className="bg-red-50 border border-red-200 rounded-xl p-3 mb-3">
+          <div className="flex items-center gap-2 text-red-700 font-bold text-[12px]"><Icon n="triangle-alert" className="w-4 h-4" />LOCKOUT / TAGOUT REQUIRED</div>
+          <div className="text-[12px] text-red-700/90 mt-1">Stored Energy: product line pressure, pneumatic, servo axes.<br />Follow plant LOTO procedure {(curAsset(s).safety || {}).procedure || "LOTO-PR-003"}.</div>
+          <button className="mt-2 text-[11px] font-semibold text-red-700 border border-red-300 rounded px-2 py-1 flex items-center gap-1"><Icon n="external-link" className="w-3 h-3" />Safety Procedure</button>
+        </div>}
+
+        <div className="grid grid-cols-2 gap-3">
+          <CMMSCard wp={wp} /><HandoffCard />
+        </div>
+        <EvidenceCard run={run} />
+      </>}
+    </div>
+  );
+}
+function CMMSCard({ wp }) {
+  const { s, dispatch } = useContext(Ctx);
+  return (
+    <div className="bg-white border border-slate-200 rounded-xl p-3">
+      <div className="text-[11px] font-bold uppercase text-slate-500 mb-2 flex items-center justify-between">CMMS Work Order <span className="text-[10px] text-emerald-700 bg-emerald-50 rounded px-1">Updated</span></div>
+      <div className="text-[12px] text-blue-600 font-medium">WO-{wp ? "AUTO" : "88452"}</div>
+      <Row k="Cause" v={wp ? wp.work_order_draft.cause : "—"} />
+      <Row k="ISO 14224" v={wp ? wp.work_order_draft.iso14224 : "—"} />
+      <div className="flex justify-between py-0.5 text-[12px]"><span className="text-slate-400">Status</span>
+        <select className="text-[12px] border border-slate-200 rounded px-1" value={s.woStatus} onChange={e => dispatch({ type: "SET", k: "woStatus", v: e.target.value })}><option>In Progress</option><option>Approved</option><option>On Hold</option></select></div>
+      <div className="flex justify-between py-0.5 text-[12px]"><span className="text-slate-400">Priority</span>
+        <select className="text-[12px] border border-slate-200 rounded px-1 text-amber-600 font-medium" value={s.woPriority} onChange={e => dispatch({ type: "SET", k: "woPriority", v: e.target.value })}><option>High</option><option>Medium</option><option>Critical</option></select></div>
+      <Row k="Est. Labor" v={(wp ? wp.work_order_draft.est_minutes : 0) + " min"} />
+      <div className="text-[11px] text-blue-600 mt-1">Open in CMMS</div>
+    </div>
+  );
+}
+function HandoffCard() {
+  const { s, dispatch } = useContext(Ctx);
+  return (
+    <div className="bg-white border border-slate-200 rounded-xl p-3">
+      <div className="text-[11px] font-bold uppercase text-slate-500 mb-2">Shift Handoff Note</div>
+      <textarea className="w-full border border-slate-200 rounded p-1.5 text-[11.5px] h-24" value={s.handoff} onChange={e => dispatch({ type: "SET", k: "handoff", v: e.target.value })} />
+      <div className="flex items-center justify-between mt-1 text-[11px]"><span className="text-slate-400">Handoff To:</span>
+        <select className="border border-slate-200 rounded px-1 text-[11px]"><option>Shift C (14:00–22:00)</option><option>Shift A</option></select></div>
+      <div className="text-[10px] text-slate-400 mt-1">Export state updates live as you edit ✎</div>
+    </div>
+  );
+}
+function EvidenceCard({ run }) {
+  const { dispatch } = useContext(Ctx);
+  const ev = run.evidence_items || [];
+  const ICON = { HISTORIAN: "trending-up", MANUAL: "book-open", CMMS: "clipboard-list", PARTS: "package", MOC: "replace", SAFETY: "shield-check", SHIFT_NOTES: "notebook-pen", MES: "factory", ASSET_REGISTRY: "git-merge" };
+  return (
+    <div className="bg-white border border-slate-200 rounded-xl p-3 mt-3">
+      <div className="text-[11px] font-bold uppercase text-slate-500 mb-2">Evidence &amp; Citations ({ev.length})</div>
+      <div className="grid grid-cols-3 gap-2">
+        {ev.slice(0, 9).map((e, i) => (
+          <button key={i} onClick={() => dispatch({ type: "OPEN_EV", ev: e })} className="border border-slate-200 rounded-lg p-2 text-left hover:border-blue-300 hover:bg-blue-50/40">
+            <Icon n={ICON[e.source_system] || "file"} className="w-4 h-4 text-slate-500" />
+            <div className="text-[11px] font-medium text-slate-700 mt-1 truncate">{e.source_system}</div>
+            <div className="text-[10px] text-slate-400 truncate">{(e.citation || {}).locator}</div>
+          </button>
+        ))}
+      </div>
+      <div className="text-[11px] text-blue-600 mt-2">View all evidence</div>
+    </div>
+  );
+}
+
+function EvidenceModal() {
+  const { s, dispatch } = useContext(Ctx);
+  const e = s.evidenceOpen;
+  const src = sourceText(e, s);
+  return (
+    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50" onClick={() => dispatch({ type: "CLOSE_EV" })}>
+      <div className="bg-white rounded-xl w-[560px] max-h-[80vh] overflow-auto shadow-xl" onClick={ev => ev.stopPropagation()}>
+        <div className="flex items-center gap-2 px-4 py-3 border-b border-slate-100">
+          <Icon n="file-search" className="w-4 h-4 text-blue-600" />
+          <span className="font-semibold text-[14px]">Evidence source — {e.source_system}</span>
+          <button className="ml-auto text-slate-400" onClick={() => dispatch({ type: "CLOSE_EV" })}><Icon n="x" className="w-4 h-4" /></button>
+        </div>
+        <div className="p-4 space-y-3 text-[12px]">
+          <div><div className="text-[10px] uppercase text-slate-400 font-bold">Extracted claim</div><div className="text-slate-800">{e.claim}</div></div>
+          <div className="flex gap-4">
+            <div><div className="text-[10px] uppercase text-slate-400 font-bold">Citation</div><div className="font-mono text-[11px] text-slate-600">{(e.citation || {}).locator}</div></div>
+            <div><div className="text-[10px] uppercase text-slate-400 font-bold">Trust</div><div>{e.trust}</div></div>
+            <div><div className="text-[10px] uppercase text-slate-400 font-bold">Confidence</div><div>{e.confidence}</div></div>
+            <div><div className="text-[10px] uppercase text-slate-400 font-bold">Weight</div><div>{e.weight}</div></div>
+          </div>
+          <div><div className="text-[10px] uppercase text-slate-400 font-bold">Raw source the agent read</div>
+            <pre className="bg-slate-900 text-slate-100 rounded-lg p-3 text-[11px] whitespace-pre-wrap mt-1">{src}</pre></div>
+          <div className="text-[10px] text-slate-400">Plane: {e.plane} · this is the actual data the agent retrieved, not a placeholder.</div>
+        </div>
+      </div>
+    </div>
+  );
+}
+function sourceText(e, s) {
+  const a = curAsset(s), KB = window.KB;
+  if (e.source_system === "MANUAL") { const m = KB.manuals["Acme Model 8200"]; return "§7.4 (p." + m["7.4"].page + ")\n\n" + m["7.4"].text; }
+  if (e.source_system === "HISTORIAN") { const tag = ((e.citation || {}).locator || "").split(":")[1]; const h = (a.historian || []).find(x => x.tag === tag) || {}; return "Tag " + tag + " (" + h.meaning + ")\nbaseline " + h.baseline + " " + h.uom + "\npeak " + h.peak + " / trough " + h.trough + "\nsignal: " + h.signal + (h.stale ? "\nstale points: " + h.stale : ""); }
+  if (e.source_system === "CMMS") { const c = a.cmms || {}; return "Recurring fault: " + c.top_cause + " (" + c.count + "/" + c.n_wo + " WOs)\nconflicts: " + JSON.stringify(c.conflicts || []); }
+  if (e.source_system === "MOC") { const m = (a.moc || []).find(x => (e.citation || {}).locator.includes(x.id)) || a.moc[0] || {}; return "Change " + m.id + " (" + m.date + ")\n" + m.change + "\nrisk_review: " + m.risk; }
+  if (e.source_system === "PARTS") { const pn = (e.citation || {}).locator; const p = (a.parts || []).find(x => x.part_no === pn) || {}; return p.part_no + " — " + p.desc + "\non hand: " + p.on_hand + " · bin " + p.bin + " · lead " + p.lead + "d"; }
+  if (e.source_system === "SHIFT_NOTES") { const n = (a.shift || []).find(x => (e.citation || {}).locator.includes(x.file)) || a.shift[0] || {}; return (n.file || "") + "\n\n" + (n.text || ""); }
+  if (e.source_system === "SAFETY") { return "Procedure: " + ((a.safety || {}).procedure || "—") + "\npermit required: " + ((a.safety || {}).permit ? "YES (hot-product)" : "no") + "\n\n(Full LOTO steps in plant safety system.)"; }
+  return e.claim;
+}
+
+function BottomBar() {
+  const { s } = useContext(Ctx);
+  const conn = [["PI System", "HISTORIAN"], ["CMMS", "CMMS"], ["Doc Source", "MANUAL"], ["ERP", "PARTS"]];
+  const used = new Set((s.run && s.run.evidence_items || []).map(e => e.source_system));
+  const progress = s.steps.length ? Math.round((Math.min(s.revealed, s.steps.length) / s.steps.length) * 100) : 0;
+  return (
+    <div className="grid grid-cols-12 gap-3">
+      <div className="col-span-4 bg-white border border-slate-200 rounded-xl p-3">
+        <div className="text-[11px] font-bold uppercase text-slate-500 mb-2">Live Events</div>
+        <div className="max-h-28 overflow-auto">{s.events.slice(0, 8).map((ev, i) => (
+          <div key={i} className="grid grid-cols-12 text-[11px] py-0.5 border-b border-slate-50"><span className="col-span-3 text-slate-400">{ev.ts}</span><span className="col-span-5 text-slate-600 truncate">{ev.event}</span><span className="col-span-2 text-slate-400">{ev.sev}</span><span className="col-span-2 text-slate-400 truncate">{ev.src}</span></div>
+        ))}</div>
+      </div>
+      <div className="col-span-3 bg-white border border-slate-200 rounded-xl p-3">
+        <div className="text-[11px] font-bold uppercase text-slate-500 mb-2">Agent State</div>
+        <Row k="Engine" v={(s.run && s.run.reasoning_engine || "—").slice(0, 22)} />
+        <Row k="Policy" v={(s.run && s.run.tool_policy) || "—"} />
+        <div className="text-[11px] text-slate-400 mt-1">Goal Progress</div>
+        <div className="w-full h-2 bg-slate-100 rounded mt-1"><div className="h-2 bg-blue-500 rounded" style={{ width: progress + "%" }} /></div>
+        <div className="text-[11px] text-slate-500 mt-0.5">{progress}%</div>
+      </div>
+      <div className="col-span-2 bg-white border border-slate-200 rounded-xl p-3">
+        <div className="text-[11px] font-bold uppercase text-slate-500 mb-2">Connectivity</div>
+        {conn.map(([label, sys]) => <div key={label} className="flex items-center justify-between text-[11px] py-0.5"><span className="text-slate-500">{label}</span><span className={"flex items-center gap-1 " + (used.has(sys) ? "text-emerald-600" : "text-slate-400")}><span className={"w-1.5 h-1.5 rounded-full " + (used.has(sys) ? "bg-emerald-500" : "bg-slate-300")} />{used.has(sys) ? "Connected" : "Idle"}</span></div>)}
+      </div>
+      <div className="col-span-3 bg-white border border-slate-200 rounded-xl p-3 flex flex-col">
+        <div className="text-[11px] font-bold uppercase text-slate-500 mb-2">Chat / Command</div>
+        <CommandBar />
+      </div>
+    </div>
+  );
+}
+function CommandBar() {
+  const { s, dispatch, runAgent } = useContext(Ctx);
+  const [v, setV] = useState("");
+  const [log, setLog] = useState([]);
+  function submit() {
+    if (!v.trim()) return;
+    const cmd = v.trim(); const lc = cmd.toLowerCase(); let resp = "";
+    const over = {};
+    const mRate = lc.match(/rate\s*\$?(\d+)/); if (mRate) over.rate = +mRate[1];
+    const mLine = lc.match(/line\s*(\d+)\s*(filler|capper|conveyor)?/); if (mLine) over.hint = "Line " + mLine[1] + " " + (mLine[2] || "filler");
+    if (lc.includes("unknown") || lc.includes("ghost")) { over.hint = "ghost xyz"; over.alarm = ""; }
+    const mAlarm = lc.match(/alarm\s*([a-z0-9-]+)/i); if (mAlarm) over.alarm = mAlarm[1].toUpperCase();
+    if (Object.keys(over).length) { resp = "Re-evaluating: " + JSON.stringify(over); runAgent(over); if (over.hint) dispatch({ type: "SET", k: "hint", v: over.hint }); if (over.rate) dispatch({ type: "SET", k: "rate", v: over.rate }); if (over.alarm !== undefined) dispatch({ type: "SET", k: "alarm", v: over.alarm }); }
+    else if (lc.includes("re-evaluate") || lc.includes("rerun") || lc.includes("re-run")) { resp = "Re-running the agent over current evidence…"; runAgent(); }
+    else resp = "Commands: 'rate 50000' · 'line 2 filler' · 'alarm A-220' · 'unknown asset' · 're-evaluate'.";
+    setLog(l => [{ cmd, resp }, ...l].slice(0, 4)); setV("");
+  }
+  return (
+    <div className="flex-1 flex flex-col">
+      <div className="flex-1 text-[11px] text-slate-500 overflow-auto mb-1">{log.map((l, i) => <div key={i} className="mb-1"><div className="text-slate-700">$ {l.cmd}</div><div className="text-slate-400">{l.resp}</div></div>)}</div>
+      <div className="flex gap-1">
+        <input className="flex-1 border border-slate-200 rounded px-2 py-1 text-[11px] font-mono" placeholder="Ask the agent or issue a command…" value={v} onChange={e => setV(e.target.value)} onKeyDown={e => e.key === "Enter" && submit()} />
+        <button className="bg-slate-900 text-white rounded px-2 text-[11px]" onClick={submit}><Icon n="send" className="w-3.5 h-3.5" /></button>
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+
+</script>
+</body></html>

@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RestartOS — Live Fault-to-Fix Cockpit</title>
+<style>
+:root{
+  --bg:#F6F8FB;--surface:#fff;--ink:#0B0E14;--muted:#5A6473;--faint:#8A93A3;--line:#E3E7EE;
+  --cobalt:#2563EB;--ot:#0E7490;--ot-bg:#ECFEFF;--eng:#4338CA;--eng-bg:#EEF1FF;
+  --ag:#6D28D9;--ag-bg:#F6F4FF;--ev:#334155;--ev-bg:#F1F5F9;--vf:#B45309;--vf-bg:#FFF7ED;
+  --gt:#B91C1C;--gt-bg:#FEF2F2;--it:#15803D;--it-bg:#F0FDF4;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.5}
+.mono{font-family:"SF Mono","Cascadia Code",Consolas,monospace}
+header{position:sticky;top:0;z-index:30;background:#0B0E14;color:#fff;padding:12px 20px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;box-shadow:0 1px 0 #1b2230}
+header .brand{font-weight:700;font-size:16px;letter-spacing:-.01em}
+header .brand small{display:block;font-weight:400;color:#9FB3FF;font-size:11px;letter-spacing:.04em}
+header .controls{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-left:auto}
+header input,header select{font-size:12.5px;border:1px solid #2A3350;background:#11151f;color:#fff;border-radius:7px;padding:6px 8px}
+header input.hint{width:150px}
+.btn{font-size:12.5px;font-weight:600;border-radius:8px;padding:8px 14px;border:1px solid var(--line);background:#fff;color:var(--ink);cursor:pointer}
+.btn:hover{background:#f2f4f8}
+.btn.run{background:var(--it);color:#fff;border-color:var(--it)}
+.btn.ghost{background:#11151f;color:#fff;border-color:#2A3350}
+.btn.ghost:hover{background:#1b2230}
+.btn:disabled{opacity:.5;cursor:default}
+.layout{display:grid;grid-template-columns:230px 1fr;gap:0;align-items:start}
+@media(max-width:820px){.layout{grid-template-columns:1fr}.rail{display:none}}
+.rail{position:sticky;top:57px;height:calc(100vh - 57px);overflow:auto;border-right:1px solid var(--line);background:#fff;padding:14px 10px}
+.rail h4{font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);margin:6px 8px 10px}
+.step{display:flex;gap:9px;align-items:flex-start;padding:7px 9px;border-radius:9px;cursor:pointer;color:var(--muted);font-size:12.7px}
+.step:hover{background:#f4f6fa}
+.step.active{background:#EEF1FF;color:var(--eng)}
+.step.done{color:var(--ink)}
+.step .dot{flex:0 0 18px;height:18px;border-radius:50%;border:2px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:var(--faint);background:#fff;margin-top:1px}
+.step.done .dot{background:var(--it);border-color:var(--it);color:#fff}
+.step.active .dot{border-color:var(--eng);color:var(--eng)}
+.presenter{display:flex;gap:6px;padding:10px 8px;border-top:1px solid var(--line);margin-top:8px;flex-wrap:wrap}
+.presenter .btn{padding:6px 10px;font-size:12px}
+main{padding:18px 22px 90px;max-width:980px}
+.hello{background:#fff;border:1px solid var(--line);border-radius:14px;padding:22px 24px}
+.hello h1{margin:0 0 6px;font-size:22px;letter-spacing:-.02em}
+.hello p{color:var(--muted);font-size:14px;margin:6px 0}
+.goal{margin-top:12px;font-size:13.5px;background:#F5F8FF;border-left:3px solid var(--cobalt);border-radius:0 8px 8px 0;padding:10px 14px}
+.stage{background:#fff;border:1px solid var(--line);border-radius:14px;padding:0;margin:14px 0;overflow:hidden;opacity:.35;transition:opacity .35s,box-shadow .35s}
+.stage.shown{opacity:1}
+.stage.current{box-shadow:0 0 0 2px var(--cobalt)}
+.stage .head{display:flex;align-items:center;gap:12px;padding:13px 18px;border-bottom:1px solid var(--line)}
+.stage .num{flex:0 0 30px;height:30px;border-radius:9px;background:var(--eng-bg);color:var(--eng);font-weight:700;font-size:13px;display:flex;align-items:center;justify-content:center}
+.stage .ttl{font-size:15.5px;font-weight:650}
+.stage .persona{margin-left:auto;font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--cobalt);background:#EEF3FF;border-radius:5px;padding:3px 8px}
+.stage .body{padding:14px 18px}
+.why{font-size:13px;color:var(--muted);background:#FAFBFD;border:1px dashed var(--line);border-radius:9px;padding:9px 12px;margin-bottom:12px}
+.why b{color:var(--ink)}
+.kv{font-size:13px;margin:3px 0}.kv b{color:var(--ink)}
+.tag{display:inline-block;font-size:11px;font-weight:700;border-radius:999px;padding:2px 9px;margin:2px 4px 2px 0;border:1px solid}
+.t-ot{color:var(--ot);background:var(--ot-bg);border-color:#67E8F9}
+.t-it{color:var(--it);background:var(--it-bg);border-color:#BBF7D0}
+.t-pass{color:var(--it);background:var(--it-bg);border-color:#BBF7D0}
+.t-fail{color:var(--gt);background:var(--gt-bg);border-color:#FECACA}
+.t-warn{color:var(--vf);background:var(--vf-bg);border-color:#FED7AA}
+.evrow{display:grid;grid-template-columns:96px 1fr 70px;gap:8px;align-items:center;font-size:12.5px;padding:6px 0;border-bottom:1px solid var(--line)}
+.evrow:last-child{border:none}
+.evsrc{font-weight:700;font-size:10.5px;letter-spacing:.03em}
+.evcite{font-family:"SF Mono",monospace;font-size:10.5px;color:var(--faint)}
+.bar-c{height:7px;background:#EEF1F6;border-radius:4px;overflow:hidden}
+.bar-f{height:100%;background:var(--cobalt)}
+.dx{display:flex;align-items:center;gap:10px;font-size:13px;margin:6px 0}
+.dx .bar-c{flex:0 0 150px}
+.step-line{font-size:12.7px;margin:5px 0;padding-left:8px;border-left:2px solid var(--line)}
+.refute{color:var(--vf);font-size:12.5px;margin:4px 0;background:var(--vf-bg);border-radius:7px;padding:7px 10px}
+.wo{background:#F7F9FC;border:1px solid var(--line);border-radius:9px;padding:11px 13px;font-size:12.7px;line-height:1.7}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.metric{background:#F1F5F9;border-radius:9px;padding:11px 13px}
+.metric .l{font-size:11.5px;color:var(--muted)}.metric .v{font-size:20px;font-weight:650;margin-top:2px}
+.itrow{display:flex;align-items:center;gap:8px;font-size:12.7px;margin:4px 0}
+.ok{color:var(--it)}.warn{color:var(--vf)}.bad{color:var(--gt)}
+.audit{font-family:"SF Mono",monospace;font-size:11px;color:var(--muted);max-height:160px;overflow:auto;background:#0B0E14;color:#cdd5e3;border-radius:9px;padding:10px 12px}
+.audit div{margin:2px 0}
+.proofs{margin-top:26px;border-top:1px solid var(--line);padding-top:16px}
+.proofs h3{font-size:14px;margin:0 0 4px}
+.proofs .sub{color:var(--muted);font-size:12.5px;margin:0 0 12px}
+.proofbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+#proofout{font-size:12.5px;background:#fff;border:1px solid var(--line);border-radius:11px;padding:14px 16px;min-height:40px;white-space:pre-wrap}
+.spinner{display:inline-block;width:13px;height:13px;border:2px solid #cbd5e1;border-top-color:var(--cobalt);border-radius:50%;animation:spin .7s linear infinite;vertical-align:-2px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.banner{font-size:13px;font-weight:600;border-radius:10px;padding:10px 14px;margin:10px 0}
+.banner.act{background:var(--it-bg);color:var(--it);border:1px solid #BBF7D0}
+.banner.abstain{background:var(--vf-bg);color:var(--vf);border:1px solid #FED7AA}
+</style></head>
+<body>
+<header>
+  <div class="brand">RestartOS <small class="mono">AGENTIC LINE-RECOVERY · reads OT · writes IT · never actuates</small></div>
+  <div class="controls">
+    <input class="hint" id="f-hint" value="Line 3 filler" title="asset hint">
+    <input class="hint" id="f-alarm" value="A-220" style="width:70px" title="alarm code">
+    <input class="hint" id="f-rate" value="10000" style="width:80px" title="downtime $/hr">
+    <button class="btn run" id="runbtn" onclick="runFlow()">▶ Run fault-to-fix</button>
+  </div>
+</header>
+
+<div class="layout">
+  <nav class="rail">
+    <h4>Pipeline</h4>
+    <div id="steps"></div>
+    <div class="presenter">
+      <button class="btn" onclick="prev()">‹ Prev</button>
+      <button class="btn" onclick="next()">Next ›</button>
+      <button class="btn ghost" id="playbtn" onclick="togglePlay()">▷ Play</button>
+    </div>
+  </nav>
+
+  <main>
+    <div class="hello" id="hello">
+      <h1>Live Fault-to-Fix Cockpit</h1>
+      <p>An agent takes a line-down goal, reasons across every plant silo, and produces a verified
+         Recovery Work Package — the outcome a senior maintenance tech assembles by hand today.</p>
+      <div class="goal mono">Goal in → "Line 3 filler down, alarm A-220 — get it running safely, fast."<br>
+         Outcome out → grounded diagnosis + safety-checked procedure + human-approved work order + fix captured for next shift.</div>
+      <p style="margin-top:14px">Press <b>▶ Run fault-to-fix</b>, then use <b>Next ›</b> / <b>▷ Play</b> to walk each stage on camera.</p>
+    </div>
+    <div id="flow"></div>
+    <div id="result"></div>
+
+    <div class="proofs">
+      <h3>Governance &amp; proofs <span class="persona" style="color:var(--gt);background:var(--gt-bg)">live</span></h3>
+      <p class="sub">The trust story — each button hits the running engine live.</p>
+      <div class="proofbar">
+        <button class="btn" onclick="proof('eval')">Run evals</button>
+        <button class="btn" onclick="proof('boundary')">OT/IT boundary test</button>
+        <button class="btn" onclick="proof('providers')">Model routing</button>
+        <button class="btn" onclick="proof('dataset')">Dataset manifest</button>
+        <button class="btn" onclick="proof('rag')">Manual RAG query</button>
+      </div>
+      <div id="proofout">Results appear here.</div>
+    </div>
+  </main>
+</div>
+
+<script>
+const STAGES = [
+  {k:"intake", t:"Goal in — incident contract", p:"Sr. Systems Architect",
+   why:"A line-down <b>goal</b> enters as a structured contract (asset, symptom, alarm, $/hr) — not a question. This is what makes it an agent, not a chatbot."},
+  {k:"resolve", t:"Resolve asset — the keystone join", p:"Sr. OT/IT Integration",
+   why:"The unsexy keystone: join <span class='mono'>PI tag ↔ SAP funcloc ↔ OEM model</span> across silos that disagree on names. Without this the agent can't reason across systems."},
+  {k:"fastpath", t:"Fast path — preliminary cause", p:"Sr. Plant Troubleshooting",
+   why:"A line bleeds money every minute, so a first likely-cause is produced in one hop from the alarm + manual, then refined."},
+  {k:"gather", t:"Agentic tool-use — the supervisor picks tools", p:"Automated Orchestration",
+   why:"This is the agent deciding, not a fixed pipeline. The supervisor chooses which plant tool to call next (historian, CMMS, manual, MOC, parts, safety, labour, security), one at a time, reacting to what it finds — then decides it has enough. Each tool writes a <b>cited, trust-weighted</b> fact."},
+  {k:"diagnose", t:"Differential diagnosis", p:"Sr. Predictive Maintenance",
+   why:"Causes are ranked by <b>evidence weight</b> with calibrated confidence and an explicit 'what would change my mind'. Symptom ≠ root cause."},
+  {k:"plan", t:"Recovery plan — grounded to the manual", p:"Sr. Maintenance Planner",
+   why:"A safe procedure is built from the manual, each step cited, parts resolved against real inventory, LOTO + labour classified."},
+  {k:"verify", t:"Cross-model verification", p:"Sr. LLM Engineer",
+   why:"A <b>different model family</b> tries to REFUTE the plan. Every citation must resolve to a real passage; every part must exist. Watch it catch the bad citation and force a re-plan."},
+  {k:"safety", t:"Automated safety pre-check", p:"Sr. LOTO Compliance",
+   why:"Defence in depth before any human: LOTO present? contradicts the manual's safety section? permit required?"},
+  {k:"gate", t:"Authorization gate — human, role-matched", p:"Sr. Maintenance Tech",
+   why:"Role-matched + economics-routed approval. LOTO ≠ recipe ≠ restart; a $50k/hr line acts on lower confidence than a $500/hr line. e-signature where required."},
+  {k:"act", t:"Act — idempotent IT writes", p:"Automated Orchestration",
+   why:"The ONLY place state changes, and only after the gate. Idempotent writes to CMMS / ERP / QMS / notify. No path can ever actuate the line."},
+  {k:"learn", t:"Monitor + learn + handover", p:"Sr. Plant Operations",
+   why:"Did the fix work? Confirm it, capture it as a validated known-fix for the next shift, and hand over."},
+];
+
+let RUN=null, shown=0, playing=false, timer=null;
+
+function renderSteps(){
+  document.getElementById('steps').innerHTML = STAGES.map((s,i)=>
+    `<div class="step ${i<shown?'done':''} ${i===shown-1?'active':''}" onclick="goto(${i+1})">
+       <span class="dot">${i<shown?'✓':i+1}</span><span>${s.t}</span></div>`).join('');
+}
+function esc(s){return String(s==null?'':s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]))}
+
+async function runFlow(){
+  const btn=document.getElementById('runbtn'); btn.disabled=true; btn.textContent='Running…';
+  document.getElementById('hello').style.display='none';
+  document.getElementById('result').innerHTML='';
+  try{
+    const r= await fetch('/api/run',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({hint:val('f-hint'),alarm:val('f-alarm'),rate:Number(val('f-rate')),auto_approve:true})});
+    RUN= await r.json();
+    if(RUN.error){document.getElementById('flow').innerHTML='<div class="banner abstain">Server error: '+esc(RUN.error)+'</div>';return;}
+    buildFlow(); shown=0; renderSteps();
+    const dec=RUN.decision;
+    document.getElementById('result').innerHTML=
+      `<div class="banner ${dec==='ACT'?'act':'abstain'}">Decision: ${dec} · framework ${esc(RUN.framework)} · reasoned by ${esc(RUN.reasoning_engine)} · `+
+      (dec==='ACT'?`${esc(RUN.work_package.likely_cause.cause)} @ conf ${RUN.work_package.confidence}`:`escalated — ${esc(RUN.escalation.reason)}`)+`</div>`;
+    next();
+  }catch(e){document.getElementById('flow').innerHTML='<div class="banner abstain">Could not reach server. Start it with: python -m restartos.server</div>';}
+  finally{btn.disabled=false; btn.textContent='▶ Run fault-to-fix';}
+}
+function val(id){return document.getElementById(id).value}
+
+function buildFlow(){
+  document.getElementById('flow').innerHTML = STAGES.map((s,i)=>
+    `<section class="stage" id="st${i}">
+       <div class="head"><div class="num">${i+1}</div><div class="ttl">${s.t}</div><div class="persona">${s.p}</div></div>
+       <div class="body"><div class="why">${s.why}</div><div id="bd${i}"></div></div>
+     </section>`).join('');
+  STAGES.forEach((s,i)=>document.getElementById('bd'+i).innerHTML=renderStage(s.k));
+}
+
+function renderStage(k){
+  const wp=RUN.work_package||{}, v=RUN.verifier||{}, sf=RUN.safety||{}, g=RUN.gate||{};
+  if(k==='intake'){const inc=(RUN.audit.find(a=>a.kind==='intake')||{}).body||{};
+    return kv('asset hint',inc.asset_hint)+kv('symptom',inc.symptom)+kv('line',inc.line)+
+      kv('alarm',inc.alarm_code)+kv('downtime $/hr','$'+Number(inc.downtime_rate_per_hr||0).toLocaleString())+
+      kv('incident id',inc.incident_id);}
+  if(k==='resolve'){const e=RUN.evidence_items.find(x=>x.source_system==='ASSET_REGISTRY')||{};
+    return `<div class="kv mono">${esc(e.claim||(wp.asset_funcloc||''))}</div>`+
+      tag('t-it','resolved')+tag('t-it','citation '+((e.citation||{}).locator||wp.asset_funcloc));}
+  if(k==='fastpath') return kv('preliminary cause',RUN.preliminary_cause||'—')+
+    `<div class="kv" style="color:var(--muted)">refined by the lenses below.</div>`;
+  if(k==='gather'){const by={}; RUN.evidence_items.forEach(e=>{(by[e.source_system]=by[e.source_system]||[]).push(e)});
+    const pol=RUN.tool_policy||'?';
+    let h=`<div class="kv"><b>Tool policy:</b> ${esc(pol)} ${/llm/.test(pol)?'(the model chose each tool)':'(adaptive offline policy; add a key to let the model choose)'}</div>`;
+    h+=`<div class="kv"><b>Tools the agent called:</b> ${(RUN.tools_called||[]).map(t=>'<span class=\'tag t-it\'>'+esc(t)+'</span>').join(' ')}</div>`;
+    const decisions=(RUN.trace||[]).filter(t=>t.startsWith('agent'));
+    if(decisions.length){h+=`<div class="kv" style="margin-top:6px"><b>Decision loop:</b></div>`;
+      decisions.forEach(d=>h+=`<div class="step-line">${esc(d.replace(/^agent\[[^\]]*\]\s*/,''))}</div>`);}
+    h+=`<div class="kv" style="margin:10px 0 4px"><b>${RUN.evidence_items.length}</b> cited facts across <b>${Object.keys(by).length}</b> silos:</div>`;
+    RUN.evidence_items.forEach(e=>{const ot=e.plane&&e.plane.startsWith('OT');
+      h+=`<div class="evrow"><span class="evsrc ${ot?'':' '}" style="color:${ot?'var(--ot)':'var(--it)'}">${esc(e.source_system)}</span>
+        <span>${esc(e.claim)}<div class="evcite">${esc((e.citation||{}).locator||'')} · trust ${e.trust} · conf ${e.confidence}</div></span>
+        <span><div class="bar-c"><div class="bar-f" style="width:${Math.round((e.trust||0)*100)}%"></div></div></span></div>`;});
+    return h;}
+  if(k==='diagnose'){let h=(RUN.hypotheses||[]).map(hp=>
+      `<div class="dx"><div class="bar-c"><div class="bar-f" style="width:${Math.round(hp.confidence*100)}%;background:${hp.confidence>0.6?'#534AB7':'#AFA9EC'}"></div></div>
+       <span><b>${esc(hp.cause)}</b> · conf ${hp.confidence} · ISO ${esc(hp.iso14224_code||'')} · ${(hp.supporting||[]).length} supporting</span></div>`).join('');
+    const top=(RUN.hypotheses||[])[0]||{};
+    h+=`<div class="kv" style="margin-top:8px"><b>Reasoned by:</b> ${esc(RUN.reasoning_engine)} ${/offline/.test(RUN.reasoning_engine)?'(add an API key in .env to let a real model decide)':'(live model)'}</div>`;
+    h+=`<div class="kv" style="color:var(--muted)">What would change my mind: ${esc(top.would_change_my_mind||'')}</div>`;
+    if((RUN.contradictions||[]).length) h+=`<div class="refute">⚠ ${RUN.contradictions.length} contradiction(s) surfaced, not averaged away.</div>`;
+    return h;}
+  if(k==='plan'){const steps=wp.troubleshooting_path||[];
+    let h=steps.map(s=>`<div class="step-line">${s.n}. ${esc(s.text)} ${s.loto_required?tag('t-warn','LOTO'):''}
+      <div class="evcite">${esc((s.citation||{}).locator||'')}</div></div>`).join('');
+    h+=`<div class="kv" style="margin-top:8px">est ${wp.work_order_draft?wp.work_order_draft.est_minutes:'?'} min · ${wp.work_order_draft?wp.work_order_draft.techs:1} tech · risk ${wp.work_order_draft?wp.work_order_draft.risk:''}</div>`;
+    (wp.parts_request||[]).forEach(p=>h+=tag('t-it',`${p.part_no} · ${p.on_hand} on hand · bin ${p.bin}`));
+    return h;}
+  if(k==='verify'){let h=`<div class="kv">verifier model <b>${esc(v.verifier_model)}</b> (different family from author)</div>`+
+      tag(v.passed?'t-pass':'t-fail',v.passed?'grounded PASS':'FAIL')+
+      tag('t-it','citation-resolution '+v.citation_resolution_rate)+
+      tag((v.hallucinated_parts||[]).length?'t-fail':'t-pass','hallucinated parts '+((v.hallucinated_parts||[]).length));
+    const ref=(RUN.trace||[]).find(t=>/REFUT/.test(t));
+    if(ref) h+=`<div class="refute">⚠ caught on first pass → re-planned: ${esc(ref.split('->')[1]||ref)}</div>`;
+    return h;}
+  if(k==='safety') return tag(sf.passed?'t-pass':'t-fail',sf.passed?'safety PASS':'safety FAIL')+
+    (sf.notes||[]).map(n=>`<div class="kv" style="color:var(--muted)">• ${esc(n)}</div>`).join('');
+  if(k==='gate') return kv('risk class',g.risk_class)+kv('approver',g.approver_role)+
+    kv('e-signature',g.e_sign?'required':'—')+kv('required confidence',g.required_confidence+' (economics-routed)')+
+    kv('actual confidence',g.actual_confidence)+tag(g.outcome==='APPROVED'?'t-pass':'t-fail',g.outcome)+
+    `<div class="kv" style="color:var(--muted)">${esc(g.rationale)}</div>`;
+  if(k==='act'){if(!(RUN.it_actions||[]).length) return '<div class="kv">no writes (abstained).</div>';
+    return (RUN.it_actions||[]).map(a=>`<div class="itrow"><span class="ok">✓</span>
+      <b>${esc(a.system)}</b>.${esc(a.action)} · created ${a.created} · <span class="evcite">key ${esc(a.idempotency_key||'')}</span></div>`).join('')+
+      `<div class="kv" style="margin-top:6px;color:var(--muted)">re-running the same incident → created=false (idempotent).</div>`;}
+  if(k==='learn'){const m=(RUN.audit.find(a=>a.kind==='monitor')||{}).body||{};
+    let h=kv('fix confirmed',m.fix_confirmed)+kv('note',m.note||'');
+    if(wp.shift_handover) h+=`<div class="wo" style="margin-top:8px">${esc(wp.shift_handover)}</div>`;
+    const e=wp.economics||{};
+    h+=`<div class="grid" style="margin-top:10px">
+      <div class="metric"><div class="l">value / event</div><div class="v">$${Number(e.value_per_event_usd||0).toLocaleString()}</div></div>
+      <div class="metric"><div class="l">MTTR</div><div class="v">${e.mttr_baseline_min}→${e.mttr_agent_min}m</div></div>
+      <div class="metric"><div class="l">agent cost</div><div class="v">$${e.agent_cost_usd}</div></div>
+      <div class="metric"><div class="l">model calls</div><div class="v">${RUN.router_usage.total_calls}</div></div></div>`;
+    h+=`<div class="kv" style="margin-top:10px"><b>Tamper-evident audit</b> · ${RUN.audit.length} hash-chained entries</div>`;
+    h+=`<div class="audit">`+RUN.audit.map(a=>`<div>#${a.seq} ${a.kind} · ${a.hash}</div>`).join('')+`</div>`;
+    return h;}
+  return '';
+}
+function kv(k,v){return `<div class="kv"><b>${esc(k)}:</b> ${esc(v)}</div>`}
+function tag(c,t){return `<span class="tag ${c}">${esc(t)}</span>`}
+
+function reveal(){
+  STAGES.forEach((s,i)=>{const el=document.getElementById('st'+i); if(!el)return;
+    el.classList.toggle('shown',i<shown); el.classList.toggle('current',i===shown-1);});
+  renderSteps();
+  if(shown>0){const el=document.getElementById('st'+(shown-1)); if(el)el.scrollIntoView({behavior:'smooth',block:'center'});}
+}
+function next(){if(!RUN)return; if(shown<STAGES.length){shown++;reveal();} else stopPlay();}
+function prev(){if(shown>1){shown--;reveal();}}
+function goto(n){if(!RUN)return; shown=Math.max(1,Math.min(STAGES.length,n));reveal();}
+function togglePlay(){playing?stopPlay():startPlay();}
+function startPlay(){if(!RUN){runFlow().then(()=>startPlay());return;} playing=true;
+  document.getElementById('playbtn').textContent='❚❚ Pause';
+  timer=setInterval(()=>{ if(shown>=STAGES.length){stopPlay();return;} next(); },3200);}
+function stopPlay(){playing=false;clearInterval(timer);document.getElementById('playbtn').textContent='▷ Play';}
+
+async function proof(kind){
+  const out=document.getElementById('proofout'); out.innerHTML='<span class="spinner"></span> running…';
+  try{
+    if(kind==='rag'){const q=prompt('Ask the manuals (natural language):','clear a clogged filler nozzle with lockout')||'nozzle clog';
+      const r=await (await fetch('/api/rag?q='+encodeURIComponent(q))).json();
+      out.textContent='RAG over '+(r.stats.docs||[]).length+' docs (lane: '+(r.stats.dense_lane||'BM25')+')\n\n'+
+        r.hits.map(h=>`${h.score}  ${h.citation}\n   ${h.excerpt.slice(0,110)}…`).join('\n\n');return;}
+    const r=await (await fetch('/api/'+kind)).json();
+    if(kind==='eval')out.textContent='EVAL (labeled fault set, run live)\n\n'+JSON.stringify({top1:r.diagnosis_top1_accuracy,citation_resolution:r.citation_resolution_rate,hallucinated_parts:r.hallucinated_part_rate,safety_violations:r.safety_violation_rate,abstention_precision:r.abstention_precision},null,2);
+    else if(kind==='boundary')out.textContent='OT/IT BOUNDARY (capability-enforced)\nwritable planes: '+r.writable_planes.join(', ')+'\n\n'+r.checks.map(c=>`${c.write_blocked?'✓ BLOCKED':'✗ ALLOWED'}  write → ${c.plane}`).join('\n');
+    else if(kind==='providers')out.textContent='MODEL ROUTING (anti-collusion)\navailable: '+Object.entries(r.availability).filter(([k,v])=>v).map(([k])=>k).join(', ')+'\nauthor tier : '+r.author+'\nverifier    : '+r.verifier+'\ndifferent family? '+(r.anti_collusion?'YES':'NO');
+    else if(kind==='dataset')out.textContent='DATASET MANIFEST\n'+r.file_count+' files · formats '+(r.formats||[]).join(' ')+'\nscenario: '+r.scenario+'\n\nintentional defects:\n'+(r.intentional_defects||[]).map(d=>`• ${d.kind} — ${d.file}`).join('\n');
+  }catch(e){out.textContent='Could not reach server: '+e.message;}
+}
+renderSteps();
+</script></body></html>

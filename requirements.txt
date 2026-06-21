@@ -1,0 +1,18 @@
+PyYAML>=6.0
+# Real orchestration framework — enables framework=langgraph (internal fallback otherwise)
+langgraph>=1.0
+# Real model providers — router falls back to deterministic mock without keys
+anthropic>=0.39
+openai>=1.40
+# PDF text extraction for the semantic manual RAG (markdown works without it)
+pypdf>=4.0
+# Semantic RAG lane — Qdrant vector store + local embedding model (free, offline)
+qdrant-client>=1.12
+sentence-transformers>=3.0
+# Persistent incident memory (Postgres)
+psycopg[binary]>=3.2
+# Optional CrewAI crew for specialist lenses (guarded by import)
+# crewai>=0.60
+# Used by the dataset generator (already present in most envs)
+openpyxl>=3.1
+reportlab>=4.0

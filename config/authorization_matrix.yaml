@@ -1,0 +1,8 @@
+# Role-matched, risk-routed human approval. base_conf is the confidence floor
+# before economics routing scales it by downtime $/hr.
+authorization_matrix:
+  WORK_ORDER_DRAFT: {approver: auto,                e_sign: false, base_conf: 0.55}
+  PARTS_RESERVE:    {approver: maintenance_planner, e_sign: false, base_conf: 0.60}
+  LOTO_PHYSICAL:    {approver: maintenance_lead,    e_sign: true,  base_conf: 0.70}
+  RECIPE_CHANGE:    {approver: quality_process_eng, e_sign: true,  base_conf: 0.80}
+  LINE_RESTART:     {approver: shift_supervisor,    e_sign: true,  base_conf: 0.75}

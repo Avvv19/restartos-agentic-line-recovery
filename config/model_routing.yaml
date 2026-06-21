@@ -1,0 +1,10 @@
+# Token usage maximized by PROBLEM TYPE. Author tiers run on NVIDIA NIM; the
+# VERIFICATION tier runs on a DIFFERENT provider/family (Groq/Gemini) for true
+# anti-collusion. Falls back down each list; mock keeps it runnable with no keys.
+routing:
+  FAST_PATH:      {providers: [groq, gemini, ollama, anthropic, mock], model: {groq: "llama-3.3-70b-versatile", gemini: "gemini-2.0-flash", ollama: "llama3.1:8b", anthropic: "claude-haiku-4-5", mock: "mock-fast"},   max_tokens: 512,  temperature: 0.0}
+  EVIDENCE_LENS:  {providers: [groq, gemini, ollama, anthropic, mock], model: {groq: "llama-3.3-70b-versatile", gemini: "gemini-2.0-flash", ollama: "llama3.1:8b", anthropic: "claude-haiku-4-5", mock: "mock-lens"},   max_tokens: 1024, temperature: 0.0}
+  DEEP_DIAGNOSIS: {providers: [nim, anthropic, openai, mock], model: {nim: "nvidia/nemotron-3-ultra-550b-a55b", anthropic: "claude-opus-4-8", openai: "gpt-4o", mock: "mock-deep"},          max_tokens: 1024, temperature: 0.0}
+  PLANNING:       {providers: [nim, anthropic, openai, mock], model: {nim: "nvidia/nemotron-3-ultra-550b-a55b", anthropic: "claude-sonnet-4-6", openai: "gpt-4o", mock: "mock-plan"},        max_tokens: 1024, temperature: 0.0}
+  VERIFICATION:   {providers: [groq, gemini, openai, anthropic, mock], model: {groq: "llama-3.3-70b-versatile", gemini: "gemini-2.0-flash", openai: "gpt-4o", anthropic: "claude-sonnet-4-6", mock: "mock-verify"},      max_tokens: 3072, temperature: 0.0}
+  KNOWLEDGE:      {providers: [gemini, groq, ollama, anthropic, mock], model: {gemini: "gemini-2.0-flash", groq: "llama-3.3-70b-versatile", ollama: "llama3.1:8b", anthropic: "claude-haiku-4-5", mock: "mock-know"},    max_tokens: 1024, temperature: 0.0}

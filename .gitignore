@@ -1,0 +1,56 @@
+# --- Secrets (NEVER commit) ---
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+secrets/
+
+# --- Generated state ---
+_it_state/
+run_INC-*.json
+*.log
+run.log
+run_act.log
+_data/run_*.json
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+*.egg
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+htmlcov/
+.coverage
+.coverage.*
+dist/
+build/
+
+# --- Virtual envs ---
+.venv/
+venv/
+env/
+.python-version
+
+# --- IDE ---
+.vscode/
+.idea/
+*.swp
+.DS_Store
+Thumbs.db
+
+# --- Docker volumes (handled by named volumes, but be safe) ---
+qdrant_storage/
+postgres_data/
+
+# --- Local model caches (Hugging Face MiniLM, etc.) ---
+.cache/
+~/.cache/huggingface/
+
+# --- Workspace junk ---
+test_write.txt
+scratch/
+tmp/
