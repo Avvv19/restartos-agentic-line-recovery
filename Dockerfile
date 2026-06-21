@@ -47,8 +47,11 @@ COPY restartos/ ./restartos/
 COPY config/ ./config/
 COPY ui/ ./ui/
 COPY dataset/ ./dataset/
-COPY _data/ ./_data/
 COPY pyproject.toml ./
+
+# Generate the simulated plant dataset at build time (deterministic, seeded).
+# The _data/ directory is gitignored — produced here so the image is self-contained.
+RUN python dataset/generate.py
 
 # Writable state dirs
 RUN mkdir -p /app/_it_state && chown -R restartos:restartos /app /home/restartos
