@@ -26,7 +26,9 @@ from .audit import AuditTrail
 from .data import DataRoot
 from .domain import (Decision, Evidence, GateOutcome, Incident, Plane,
                      ProcedureStep, RiskClass, WorkPackage, to_jsonable)
-from .connectors import build_historian, load_datalayer_config
+from .connectors import (build_cmms, build_historian, build_hris,
+                          build_notifier, build_parts_backend,
+                          load_datalayer_config)
 from .gate import AuthorizationGate
 from .llm.router import Budget, ModelRouter
 from .memory import IncidentMemory, format_priors_as_facts
@@ -75,8 +77,9 @@ class RestartOSEngine:
         self.tau = abstain_threshold
         self.gate = AuthorizationGate(
             config_path=os.path.join(config_dir, "authorization_matrix.yaml"))
-        self.it = ITActionPlane(os.path.join(self.dr.root, "..", "_it_state"))
         self.memory = IncidentMemory()
+        # Built lazily below once datalayer_cfg is available
+        self.it = None
         settings = {}
         sp = os.path.join(config_dir, "settings.yaml")
         if os.path.exists(sp):
@@ -95,6 +98,17 @@ class RestartOSEngine:
             "max_wall_clock_s": float(bcfg.get("max_wall_clock_s", 120.0)),
         }
         self.datalayer_cfg = load_datalayer_config(settings)
+        # Live backends (each may be None → ITActionPlane uses JSON fallback)
+        self._live_cmms = build_cmms(self.datalayer_cfg)
+        self._live_parts = build_parts_backend(self.datalayer_cfg)
+        self._live_notifier = build_notifier(self.datalayer_cfg)
+        self._live_hris = build_hris(self.datalayer_cfg)
+        self.it = ITActionPlane(
+            os.path.join(self.dr.root, "..", "_it_state"),
+            cmms_backend=self._live_cmms,
+            parts_backend=self._live_parts,
+            notifier=self._live_notifier,
+        )
 
     def run(self, incident: Incident,
             approver: Optional[Callable] = None) -> RunResult:
@@ -113,6 +127,7 @@ class RestartOSEngine:
             budget=Budget(**self.budget_kwargs))
         ctx = A.Context(incident=incident, dr=self.dr, router=router)
         ctx.historian = build_historian(self.dr, self.datalayer_cfg)
+        ctx.hris = self._live_hris
         audit = AuditTrail()
         audit.append("intake", to_jsonable(incident))
         graph = make_graph(self)
@@ -130,6 +145,7 @@ class RestartOSEngine:
             budget=Budget(**self.budget_kwargs))
         ctx = A.Context(incident=incident, dr=self.dr, router=router)
         ctx.historian = build_historian(self.dr, self.datalayer_cfg)
+        ctx.hris = self._live_hris
         audit = AuditTrail()
         audit.append("intake", to_jsonable(incident))
 

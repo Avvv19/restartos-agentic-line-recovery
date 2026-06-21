@@ -38,6 +38,7 @@ class Context:
     negative_evidence: list[str] = field(default_factory=list)  # tried-and-failed
     trace: list[str] = field(default_factory=list)
     historian: object = None   # live connector or dataset adapter (set by engine)
+    hris: object = None        # live BambooHRIS or None (engine injects)
     hyps: list = field(default_factory=list)
     preliminary_cause: object = None
     reasoning_engine: str = "unset"
@@ -225,52 +226,72 @@ class LaborAgent:
     def run(self, ctx: Context) -> None:
         import csv as _csv
         import os as _os
-        roster_path = _os.path.join(ctx.dr.root, "hr", "shift_roster.csv")
         alarm = (ctx.incident.alarm_code or "").upper()
         cert_field = self._CERT_FOR_ALARM.get(alarm, "cert_mech_l2")
         chosen = None
-        if _os.path.exists(roster_path):
+        rows: list[dict] = []
+        roster_source = "sim/csv"
+
+        # Live HRIS path (BambooHR REST API). Falls back to CSV on any error.
+        if ctx.hris is not None:
             try:
-                with open(roster_path, encoding="utf-8") as f:
-                    rows = list(_csv.DictReader(f))
-                # 1) Same line + LOTO + required cert
+                rows = ctx.hris.shift_roster(line=ctx.asset.line)
+                roster_source = type(ctx.hris).__name__
+            except Exception as e:
+                ctx.log(f"hris: live roster fetch failed ({e}); using CSV fallback")
+                rows = []
+
+        if not rows:
+            roster_path = _os.path.join(ctx.dr.root, "hr", "shift_roster.csv")
+            if _os.path.exists(roster_path):
+                try:
+                    with open(roster_path, encoding="utf-8") as f:
+                        rows = list(_csv.DictReader(f))
+                except Exception:
+                    rows = []
+
+        # Selection logic — runs against whichever roster source loaded.
+        try:
+            # 1) Same line + LOTO + required cert
+            for r in rows:
+                if (r.get("line") == ctx.asset.line and r.get("cert_loto") == "Y"
+                        and r.get(cert_field) == "Y"):
+                    chosen = r
+                    break
+            # 2) Any line, LOTO + required cert
+            if chosen is None:
                 for r in rows:
-                    if (r.get("line") == ctx.asset.line and r.get("cert_loto") == "Y"
-                            and r.get(cert_field) == "Y"):
+                    if r.get("cert_loto") == "Y" and r.get(cert_field) == "Y":
                         chosen = r
                         break
-                # 2) Any line, LOTO + required cert
-                if chosen is None:
-                    for r in rows:
-                        if r.get("cert_loto") == "Y" and r.get(cert_field) == "Y":
-                            chosen = r
-                            break
-                # 3) Fallback: any LOTO-certified tech
-                if chosen is None:
-                    for r in rows:
-                        if r.get("cert_loto") == "Y":
-                            chosen = r
-                            break
-            except Exception:
-                chosen = None
+            # 3) Fallback: any LOTO-certified tech
+            if chosen is None:
+                for r in rows:
+                    if r.get("cert_loto") == "Y":
+                        chosen = r
+                        break
+        except Exception:
+            chosen = None
 
         if chosen:
             tech = chosen["name"]
             claim = (f"Qualified tech ({tech}, role={chosen.get('role','?')}, "
                      f"line={chosen.get('line','?')}, shift={chosen.get('shift','?')}, "
-                     f"LOTO+{cert_field}=Y) on shift; phone {chosen.get('phone','?')}")
+                     f"LOTO+{cert_field}=Y) on shift; phone {chosen.get('phone','?')} "
+                     f"[source={roster_source}]")
             ctx.graph.add(_ev(
                 claim, "HR", Plane.IT_BUSINESS, 0.85, ctx,
-                Citation("HR", f"hr/shift_roster.csv#{chosen.get('employee_id','')}", True),
+                Citation("HR", f"{roster_source}#{chosen.get('employee_id','')}", True),
                 asset=ctx.asset.funcloc, tech=tech, employee_id=chosen.get("employee_id"),
-                cert=cert_field, qualified=True, _by=self.name))
+                cert=cert_field, qualified=True, source=roster_source, _by=self.name))
         else:
-            # No roster file or no eligible tech — record the gap, do not invent a name
+            # No eligible tech — record the gap, do not invent a name
             ctx.graph.add(_ev(
                 f"No qualified technician with {cert_field}+LOTO found in roster",
                 "HR", Plane.IT_BUSINESS, 0.6, ctx,
-                Citation("HR", "hr/shift_roster.csv", True),
-                asset=ctx.asset.funcloc, qualified=False, _by=self.name))
+                Citation("HR", roster_source, True),
+                asset=ctx.asset.funcloc, qualified=False, source=roster_source,
+                _by=self.name))
 
 
 class ShiftNotesAgent:
