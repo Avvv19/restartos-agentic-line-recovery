@@ -28,7 +28,7 @@ from .domain import Incident, GateOutcome, Severity, to_jsonable
 from .orchestration import RestartOSEngine
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-UI = os.path.join(ROOT, "ui", "app.html")
+INDEX = os.path.join(ROOT, "ui", "index.html")
 WORKBENCH = os.path.join(ROOT, "ui", "workbench.html")
 CONFIG = os.path.join(ROOT, "config")
 
@@ -131,10 +131,10 @@ class Handler(BaseHTTPRequestHandler):
         u = urllib.parse.urlparse(self.path)
         q = urllib.parse.parse_qs(u.query)
         try:
-            if u.path in ("/", "/index.html", "/workbench", "/workbench.html"):
+            if u.path in ("/", "/index.html"):
+                return self._html(INDEX)
+            if u.path in ("/workbench", "/workbench.html"):
                 return self._html(WORKBENCH)
-            if u.path in ("/app", "/app.html", "/walkthrough"):
-                return self._html(UI)
             if u.path in ("/cockpit", "/cockpit.html", "/ui/cockpit.html"):
                 fp = os.path.join(ROOT, "ui", "cockpit.html")
                 if os.path.exists(fp):

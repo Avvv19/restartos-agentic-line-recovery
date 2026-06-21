@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Restart OS — Agentic Line-Recovery</title>
+<style>
+  :root{
+    --bg:#0a0f1c; --panel:#0f1730; --line:#1f2a4a; --line2:#2a3a66;
+    --ink:#f8fafc; --dim:#94a3b8; --mut:#64748b;
+    --cyan:#22d3ee; --violet:#a855f7; --indigo:#6366f1;
+    --green:#34d399; --amber:#fbbf24;
+    --mono:ui-monospace,"SF Mono",Consolas,monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;line-height:1.55;
+    background-image:
+      radial-gradient(1100px 500px at 80% -10%,rgba(99,102,241,.10),transparent 60%),
+      radial-gradient(900px 400px at -10% 110%,rgba(34,211,238,.07),transparent 60%);
+    background-attachment:fixed;
+  }
+  .wrap{max-width:1100px;margin:0 auto;padding:34px 22px 80px}
+  header.brand{display:flex;align-items:center;gap:18px;margin-bottom:6px}
+  .logo{width:46px;height:46px;border-radius:11px;
+    background:conic-gradient(from 220deg,var(--cyan),var(--indigo),var(--violet),var(--green),var(--cyan));
+    position:relative;flex:0 0 46px}
+  .logo::after{content:"";position:absolute;inset:4px;border-radius:7px;background:#0a0f1c}
+  .logo::before{content:"R";position:absolute;inset:0;display:grid;place-items:center;
+    font-family:var(--mono);font-weight:700;font-size:22px;color:#fff;z-index:1}
+  h1{margin:0;font-size:36px;letter-spacing:-1px;font-weight:700}
+  .sub{font-family:var(--mono);font-size:11.5px;letter-spacing:.22em;color:var(--dim);text-transform:uppercase;margin-top:2px}
+  .tag{margin:22px 0 14px;color:#cbd5e1;font-size:18px;max-width:780px}
+  .pillrow{display:flex;flex-wrap:wrap;gap:8px;margin:18px 0 26px}
+  .pill{font-family:var(--mono);font-size:12px;padding:6px 12px;border-radius:999px;border:1px solid var(--line2);background:rgba(11,23,48,.7);color:var(--dim);display:inline-flex;align-items:center;gap:7px}
+  .pill .dot{width:6px;height:6px;border-radius:50%}
+  .ok{color:#86efac} .ok .dot{background:var(--green);box-shadow:0 0 6px var(--green)}
+  .warn{color:#fde68a} .warn .dot{background:var(--amber)}
+  .info{color:#a5b4fc} .info .dot{background:var(--indigo)}
+
+  .grid{display:grid;grid-template-columns:1.2fr .8fr;gap:22px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:22px}
+  .card h2{margin:0 0 10px;font-size:18px;display:flex;align-items:center;gap:10px}
+  .card .lead{color:var(--dim);font-size:14.5px;margin-bottom:14px}
+  .stat{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:6px}
+  .stat .s{background:#0a1226;border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+  .stat .v{font-family:var(--mono);font-size:22px;color:#fff;font-weight:700}
+  .stat .l{font-family:var(--mono);font-size:10.5px;color:var(--dim);text-transform:uppercase;letter-spacing:.13em;margin-top:4px}
+
+  .ctas{display:flex;flex-wrap:wrap;gap:10px;margin-top:18px}
+  .btn{display:inline-flex;align-items:center;gap:8px;text-decoration:none;color:#fff;
+    background:linear-gradient(180deg,var(--indigo),#4f46e5);border:1px solid #4f46e5;
+    padding:11px 18px;border-radius:10px;font-size:13.5px;font-weight:600}
+  .btn:hover{filter:brightness(1.12)}
+  .btn.ghost{background:transparent;border-color:var(--line2);color:var(--ink)}
+  .btn.warn{background:linear-gradient(180deg,#f59e0b,#d97706);border-color:#f59e0b;color:#0a0f1c}
+
+  ul.eplist{list-style:none;margin:0;padding:0;font-family:var(--mono);font-size:12.5px}
+  ul.eplist li{padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:#0a1226;margin-bottom:6px;display:flex;justify-content:space-between;align-items:center}
+  ul.eplist code{background:transparent;color:var(--cyan)}
+  ul.eplist .desc{color:var(--dim);font-family:-apple-system,sans-serif;font-size:12px}
+
+  details{background:#0a1226;border:1px solid var(--line);border-radius:10px;padding:10px 14px;margin-top:14px}
+  details summary{cursor:pointer;color:#cbd5e1;font-size:14px}
+  details[open]{padding-bottom:14px}
+  pre{background:#04081a;padding:12px 14px;border-radius:8px;overflow:auto;font-size:12.5px;line-height:1.5;color:#e2e8f0}
+
+  .note{margin-top:26px;padding:14px 18px;background:rgba(251,191,36,.07);border:1px solid rgba(251,191,36,.3);border-radius:10px;color:#fde68a;font-size:14px}
+  .note b{color:#fcd34d}
+
+  footer{margin-top:30px;color:var(--mut);font-size:12px;font-family:var(--mono);text-align:center}
+  footer a{color:var(--cyan);text-decoration:none}
+
+  @media (max-width:880px){.grid{grid-template-columns:1fr}.tag{font-size:16px}h1{font-size:28px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="brand">
+    <div class="logo"></div>
+    <div>
+      <h1>Restart OS</h1>
+      <div class="sub">Agentic Line-Recovery for Manufacturing</div>
+    </div>
+  </header>
+
+  <p class="tag">When a production line goes down, a senior maintenance tech spends 45–90 minutes chasing data across 8 different systems just to write the work order. <b>Restart OS does that job</b> — it triages the fault, grounds the procedure in the OEM manual, picks a qualified technician, drafts the work order, reserves the parts, and hands the human a single approve/reject button.</p>
+
+  <div class="pillrow">
+    <span class="pill ok"><span class="dot"></span>4 agents · cross-model verify</span>
+    <span class="pill ok"><span class="dot"></span>Qdrant semantic RAG</span>
+    <span class="pill ok"><span class="dot"></span>Postgres incident memory</span>
+    <span class="pill warn"><span class="dot"></span>52% abstention (honest uncertainty)</span>
+    <span class="pill info"><span class="dot"></span>OT/IT boundary enforced</span>
+  </div>
+
+  <div class="grid">
+    <section class="card">
+      <h2>🛠️ See the agent at work</h2>
+      <p class="lead">The operator cockpit shows the latest live run: every tool the agent called, every citation it grounded, every IT artifact it produced. Auto-refreshes when a new incident lands.</p>
+      <div class="ctas">
+        <a class="btn" href="/cockpit">Open the Cockpit →</a>
+        <a class="btn ghost" href="/api/latest_run" target="_blank">View raw JSON</a>
+        <a class="btn ghost" href="/metrics" target="_blank">Prometheus /metrics</a>
+      </div>
+
+      <div class="stat" id="stats">
+        <div class="s"><div class="v" id="incidents">—</div><div class="l">Incidents handled</div></div>
+        <div class="s"><div class="v" id="abst">—</div><div class="l">Abstention rate</div></div>
+        <div class="s"><div class="v" id="memN">—</div><div class="l">In Postgres memory</div></div>
+        <div class="s"><div class="v" id="conf">—</div><div class="l">Last confidence</div></div>
+      </div>
+
+      <details>
+        <summary>Trigger a fault from the command line</summary>
+<pre>docker exec restartos-engine python -m restartos.cli run --auto-approve</pre>
+      </details>
+    </section>
+
+    <section class="card">
+      <h2>🌐 Live endpoints</h2>
+      <p class="lead">Everything the engine exposes is JSON. Each endpoint is documented and audit-logged.</p>
+      <ul class="eplist">
+        <li><span><code>GET /cockpit</code> <span class="desc">— operator UI</span></span></li>
+        <li><span><code>GET /api/latest_run</code> <span class="desc">— last incident's full trace</span></span></li>
+        <li><span><code>GET /api/memory</code> <span class="desc">— Postgres stats</span></span></li>
+        <li><span><code>GET /api/rag?q=…</code> <span class="desc">— semantic search</span></span></li>
+        <li><span><code>GET /api/providers</code> <span class="desc">— LLM availability</span></span></li>
+        <li><span><code>GET /api/boundary</code> <span class="desc">— OT-write boundary proof</span></span></li>
+        <li><span><code>GET /healthz</code> <span class="desc">— liveness probe</span></span></li>
+        <li><span><code>GET /metrics</code> <span class="desc">— Prometheus exposition</span></span></li>
+      </ul>
+    </section>
+  </div>
+
+  <div class="note">
+    <b>⏱ Production calibration window — 3 to 4 weeks.</b> Restart OS will not autonomously dispatch work orders on a real line until it has spent 3–4 weeks in shadow mode on that plant's own incidents, with a maintenance lead reviewing every proposal. Only when the measured human–agent agreement rate is sustained at ≥ 85% does the gate flip to autonomous. <a href="https://github.com/Avvv19/restartos-agentic-line-recovery/blob/main/docs/CALIBRATION.md" style="color:#fcd34d;text-decoration:underline">Read the calibration guide →</a>
+  </div>
+
+  <footer>
+    Source · <a href="https://github.com/Avvv19/restartos-agentic-line-recovery">github.com/Avvv19/restartos-agentic-line-recovery</a>
+    · Statement 9 · MIT License
+  </footer>
+</div>
+
+<script>
+(async () => {
+  try {
+    const m = (await fetch('/metrics')).ok ? await (await fetch('/metrics')).text() : '';
+    // Match metric lines (NOT the HELP/TYPE comment lines starting with #).
+    const grab = name => {
+      const re = new RegExp('^' + name + '\\s+(\\S+)\\s*$', 'm');
+      const x = m.match(re); return x ? x[1] : null;
+    };
+    const n     = grab('restartos_incidents_total');
+    const abst  = grab('restartos_abstention_rate');
+    const memN  = grab('restartos_memory_incidents');
+    const conf  = grab('restartos_last_top_confidence');
+    if (n)    document.getElementById('incidents').textContent = n;
+    if (abst) document.getElementById('abst').textContent = (parseFloat(abst)*100).toFixed(0) + '%';
+    if (memN) document.getElementById('memN').textContent = memN;
+    if (conf) document.getElementById('conf').textContent = parseFloat(conf).toFixed(2);
+  } catch (e) { /* ignore — page still works */ }
+})();
+</script>
+</body>
+</html>

@@ -1,4 +1,4 @@
-# RestartOS — the solution to Problem Statement 9
+# Restart OS — the solution to Problem Statement 9
 
 ## The problem, reverse-engineered
 > "Build an AI agent that solves a real, specific pain in manufacturing. Not a chatbot.
@@ -11,7 +11,7 @@ a senior maintenance tech today manually chases information across siloed system
 likely cause, writes a safe procedure, and raises a work order. It is slow, it is tribal,
 and it bleeds money every minute.
 
-**RestartOS does that job.** Goal in → outcome out:
+**Restart OS does that job.** Goal in → outcome out:
 ```
 "Line 3 filler down, alarm A-220 — get it running safely, fast."
         ↓
@@ -20,7 +20,7 @@ verified Recovery Work Package: likely cause + evidence trail + safe (LOTO) proc
 ```
 
 ## Why it is an agent (not a chatbot, not a dashboard)
-| Requirement | How RestartOS satisfies it |
+| Requirement | How Restart OS satisfies it |
 |---|---|
 | Takes a **goal** | An `Incident` contract (asset, symptom, alarm, $/hr) — not a chat prompt. |
 | Makes **decisions** | Which tool to call next (agentic loop); the ranked differential; act vs **abstain**; the economics-routed gate. |

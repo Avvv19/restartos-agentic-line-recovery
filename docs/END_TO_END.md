@@ -1,4 +1,4 @@
-# RestartOS — End-to-End Walkthrough
+# Restart OS — End-to-End Walkthrough
 
 A complete trace of one real incident from the **PLC alarm** firing through to **the work order being created in the CMMS**, with screenshots of the live system at each stage.
 
@@ -12,7 +12,7 @@ This walkthrough uses the run `INC-ad9f9fa7` — a live execution against NVIDIA
 >
 > Build an AI agent that solves a real, specific pain experienced by someone who works in manufacturing. Not a chatbot. Not a dashboard. **An agent that takes a goal, makes decisions, calls tools, and produces an outcome a human would otherwise do by hand.**
 
-The specific pain RestartOS solves: **unplanned line-down fault resolution**. When a line stops, a senior maintenance tech today manually:
+The specific pain Restart OS solves: **unplanned line-down fault resolution**. When a line stops, a senior maintenance tech today manually:
 
 1. Checks the historian for the alarm signature
 2. Searches CMMS for prior identical faults on that asset
@@ -27,7 +27,7 @@ The specific pain RestartOS solves: **unplanned line-down fault resolution**. Wh
 
 It is slow, it is tribal, and it bleeds money every minute the line is down.
 
-**RestartOS does that job.** Input: a structured incident contract. Output: a verified, human-approved Recovery Work Package written into the CMMS, ERP, QMS, and shift log. Zero free-text chat.
+**Restart OS does that job.** Input: a structured incident contract. Output: a verified, human-approved Recovery Work Package written into the CMMS, ERP, QMS, and shift log. Zero free-text chat.
 
 ---
 
