@@ -44,6 +44,40 @@ APPROVED_IT_ACTIONS = [
 ]
 
 
+# The evidence a confident, safe recovery decision should rest on, with the
+# weight each source carries toward a 100-point sufficiency score.
+SUFFICIENCY_SOURCES = [
+    ("HISTORIAN", "Machine event timeline", 18),
+    ("MANUAL", "OEM procedure", 15),
+    ("SAFETY", "Safety / LOTO", 15),
+    ("CMMS", "Maintenance history", 15),
+    ("PARTS", "Parts availability", 10),
+    ("HR", "Qualified technician", 10),
+    ("MES", "Production / downtime", 5),
+    ("SHIFT_NOTES", "Shift notes", 5),
+    ("MOC", "Recent changes", 5),
+    ("QUALITY", "Quality rule", 2),   # always partial — QC plan is generated, not gathered
+]
+
+
+def evidence_sufficiency(ctx) -> dict:
+    """Score whether the agent gathered ENOUGH to decide — not how confident it
+    feels. Manufacturing decisions need evidence, not confidence vibes."""
+    present = {e.source_system for e in ctx.graph.items.values()}
+    items, score = [], 0.0
+    for sys, label, weight in SUFFICIENCY_SOURCES:
+        if sys == "QUALITY":
+            status, got = "partial", weight * 0.5      # QC plan exists but isn't gathered evidence
+        elif sys in present:
+            status, got = "present", weight
+        else:
+            status, got = "missing", 0.0
+        score += got
+        items.append({"system": sys, "label": label, "status": status})
+    missing = [i["label"] for i in items if i["status"] == "missing"]
+    return {"score": int(round(score)), "items": items, "missing": missing}
+
+
 def build_missing_evidence_request(ctx, top) -> Optional[MissingEvidenceRequest]:
     """If a single, specific human-supplied input would plausibly unblock the
     decision, return the ask. Otherwise None (→ a plain ABSTAIN)."""

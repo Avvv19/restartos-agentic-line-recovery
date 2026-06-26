@@ -32,6 +32,17 @@ INDEX = os.path.join(ROOT, "ui", "index.html")
 WORKBENCH = os.path.join(ROOT, "ui", "workbench.html")
 CONFIG = os.path.join(ROOT, "config")
 
+_SCENES_CACHE = {}
+
+
+def _scenes():
+    """Build the deterministic demo scenes once and cache (engine is
+    deterministic offline, so the cache is safe for the whole process)."""
+    if "data" not in _SCENES_CACHE:
+        from .demo import build_all
+        _SCENES_CACHE["data"] = build_all(_engine())
+    return _SCENES_CACHE["data"]
+
 
 def _engine() -> RestartOSEngine:
     return RestartOSEngine(config_dir=CONFIG, data_root=os.path.join(ROOT, "_data"))
@@ -139,6 +150,12 @@ class Handler(BaseHTTPRequestHandler):
                 fp = os.path.join(ROOT, "ui", "cockpit.html")
                 if os.path.exists(fp):
                     return self._html(fp)
+            if u.path in ("/demo", "/demo.html", "/ui/demo.html"):
+                fp = os.path.join(ROOT, "ui", "demo.html")
+                if os.path.exists(fp):
+                    return self._html(fp)
+            if u.path == "/api/scenes":
+                return self._json(_scenes())
             if u.path in ("/api/latest_run", "/_it_state/latest_run.json"):
                 fp = os.path.join(ROOT, "_it_state", "latest_run.json")
                 if os.path.exists(fp):

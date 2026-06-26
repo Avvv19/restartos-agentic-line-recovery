@@ -148,3 +148,43 @@ def test_work_package_artifacts_are_named():
                 "qc_sampling_plan", "shift_handoff_note", "decision_contract"):
         assert key in arts
     assert arts["root_cause_summary"]["first_actionable_fault"]
+
+
+# --- sufficiency, ROI, simulate-before-write -------------------------------- #
+def test_evidence_sufficiency_high_on_full_data():
+    res = _engine().run(Incident("Line 3 filler", "down", "Line 3", "A-220"),
+                        approver=_approve)
+    suff = res.evidence_sufficiency
+    assert suff["score"] >= 85
+    assert "Machine event timeline" not in suff["missing"]
+
+
+def test_simulate_before_write_previews_all_writes():
+    res = _engine().run(Incident("Line 3 filler", "down", "Line 3", "A-220"),
+                        approver=_approve)
+    sim = res.simulate_writes
+    assert sim and sim["all_clear"] is True
+    systems = {p["system"] for p in sim["planned"]}
+    assert {"CMMS", "ERP", "QMS", "NOTIFY"} <= systems
+
+
+def test_economics_has_risk_adjusted_value():
+    res = _engine().run(Incident("Line 3 filler", "down", "Line 3", "A-220"),
+                        approver=_approve)
+    econ = res.work_package.economics
+    assert econ["risk_adjusted_value_usd"] <= econ["value_per_event_usd"]
+    assert econ["manual_paperwork_min_avoided"] > 0
+
+
+# --- deterministic demo scenes ---------------------------------------------- #
+def test_demo_builds_five_scenes_with_expected_decisions():
+    from restartos.demo import build_all
+    data = build_all(_engine())
+    assert len(data["scenes"]) == 5
+    by_id = {s["id"]: s for s in data["scenes"]}
+    assert by_id[1]["run"]["decision"] == "ACT"
+    assert by_id[2]["run"]["decision"] == "NEED_MORE_INFO"
+    assert by_id[3]["run"]["decision"] == "ABSTAIN"
+    assert any("REFUT" in t for t in by_id[4]["run"]["trace"])  # self-correction fired
+    assert by_id[5]["kind"] == "ot_block"
+    assert all(a["blocked"] for a in by_id[5]["attempts"])      # every OT write blocked

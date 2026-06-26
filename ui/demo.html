@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Restart OS — Demo Cockpit</title>
+<style>
+:root{--bg:#F7F8FB;--surface:#fff;--ink:#0B0E14;--muted:#5A6473;--faint:#8A93A3;
+--line:#E3E7EE;--cobalt:#2563EB;--it:#15803D;--vf:#B45309;--gt:#B91C1C;--ag:#6D28D9}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);
+font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.5}
+.mono{font-family:"SF Mono",Consolas,monospace}
+.wrap{max-width:1080px;margin:0 auto;padding:20px 18px 90px}
+h1{font-size:22px;margin:0 0 2px}
+.sub{color:var(--muted);font-size:13.5px;margin-bottom:14px}
+.safety{background:#0B0E14;color:#E6EAF2;border-radius:10px;padding:10px 14px;font-size:12.6px;margin-bottom:14px;
+display:flex;gap:8px;align-items:center}
+.safety b{color:#86EFAC}
+.ba{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px}
+.ba .col{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+.ba h3{margin:0 0 8px;font-size:12px;letter-spacing:.06em;text-transform:uppercase}
+.ba .b h3{color:var(--gt)}.ba .a h3{color:var(--it)}
+.ba ol{margin:0;padding-left:18px;font-size:12.4px;color:var(--muted)}
+.ba li{margin:2px 0}
+.scenes{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:6px}
+.scene-btn{flex:1 1 180px;text-align:left;background:var(--surface);border:1px solid var(--line);
+border-radius:10px;padding:10px 12px;cursor:pointer;transition:.12s}
+.scene-btn:hover{border-color:var(--cobalt)}
+.scene-btn.on{border-color:var(--cobalt);box-shadow:0 0 0 2px #DBEAFE}
+.scene-btn .n{font-size:10.5px;color:var(--faint);font-weight:700;letter-spacing:.06em}
+.scene-btn .t{font-size:13px;font-weight:700;margin:2px 0}
+.scene-btn .d{font-size:11px;color:var(--muted)}
+.status{border-radius:12px;padding:14px 16px;margin:16px 0;color:#fff;font-size:14px;font-weight:600}
+.s-ACT{background:var(--it)}.s-ABSTAIN{background:var(--gt)}.s-NMI{background:var(--vf)}.s-BLOCK{background:#0B0E14}
+.status .tl{font-size:12px;font-weight:500;opacity:.92;margin-top:2px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+.card.full{grid-column:1 / -1}
+.sect{font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);font-weight:700;margin:0 0 8px}
+.trace div{font-size:12.6px;margin:3px 0}.ok{color:var(--it)}.warn{color:var(--vf)}.bad{color:var(--gt)}.mut{color:var(--muted)}
+.step{display:flex;gap:8px;margin:3px 0;font-size:12.6px}.step .i{color:var(--faint);font-weight:700;min-width:16px}
+.tbl{width:100%;border-collapse:collapse;font-size:12.2px}
+.tbl th{text-align:left;color:var(--faint);font-weight:700;font-size:10.5px;text-transform:uppercase;padding:4px 6px;border-bottom:1px solid var(--line)}
+.tbl td{padding:5px 6px;border-bottom:1px solid var(--line);vertical-align:top}
+.board .erow{display:grid;grid-template-columns:92px 1fr 78px;gap:8px;padding:7px 0;border-top:1px solid var(--line);font-size:12.2px}
+.board .erow:first-child{border-top:none}.board .src{font-weight:700;font-size:10.5px}
+.stance-sup{color:var(--it)}.stance-con{color:var(--gt)}.stance-ctx{color:var(--muted)}
+.suff{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.suff .num{font-size:26px;font-weight:800}.suff .bar{flex:1;height:9px;background:#EEF1F6;border-radius:5px;overflow:hidden}
+.suff .fill{height:100%;background:var(--it)}
+.pill{display:inline-block;font-size:10.5px;font-weight:700;border-radius:999px;padding:2px 9px;border:1px solid;margin:2px 3px 0 0}
+.p-pass{color:var(--it);border-color:#BBF7D0;background:#F0FDF4}
+.p-part{color:var(--vf);border-color:#FDE68A;background:#FFFBEB}
+.p-miss{color:var(--gt);border-color:#FECACA;background:#FEF2F2}
+.wo{background:#F7F9FC;border:1px solid var(--line);border-radius:8px;padding:10px 12px;font-size:12.4px;margin-top:6px}
+.contract{background:#0B0E14;color:#E6EAF2;border-radius:10px;padding:14px 16px;font-size:12.6px}
+.contract .r{margin:4px 0}.allow{color:#86EFAC}.forbid{color:#FCA5A5}
+.esc{background:#FFF7ED;border:1px solid #FED7AA;border-radius:10px;padding:12px 14px;font-size:12.6px}
+.esc .nx{font-weight:700;color:var(--vf);margin-top:6px}
+.kv{font-size:12.5px;margin:2px 0}.kv b{color:var(--ink)}
+.val{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.val .box{background:#F7F9FC;border:1px solid var(--line);border-radius:8px;padding:8px 10px}
+.val .box .n{font-size:18px;font-weight:800}.val .box .l{font-size:11px;color:var(--muted)}
+.otrow{display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-top:1px solid var(--line);font-size:12.6px}
+.otrow:first-child{border-top:none}.blocked{color:var(--gt);font-weight:700}
+@media(max-width:760px){.grid,.ba,.val{grid-template-columns:1fr}}
+</style></head>
+<body><div class="wrap">
+<h1>Restart OS — Demo Cockpit</h1>
+<div class="sub">An <b>agent</b> for unplanned line-down recovery: it takes a goal, decides what to check, calls plant tools, and produces a human-approved Recovery Work Package — in ~30 seconds.</div>
+<div class="safety">🔒 <span><b>Safety boundary:</b> OT is read-only. No PLC / SCADA writes are possible — enforced in code. Only approved IT-side actions run, and only after human authorization.</span></div>
+
+<div class="ba">
+  <div class="col b"><h3>Before Restart OS — 45–90 min lost</h3><ol id="before"></ol></div>
+  <div class="col a"><h3>After Restart OS — ~30 seconds</h3><ol id="after"></ol></div>
+</div>
+
+<div class="sect">Pick a scene — each is deterministic and runs the real engine</div>
+<div class="scenes" id="scenes"></div>
+
+<div id="view"><div class="card" style="margin-top:16px"><div class="mut">Loading scenes…</div></div></div>
+</div>
+<script>
+const $=id=>document.getElementById(id);
+function esc(s){return String(s==null?'':s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]))}
+const money=n=>'$'+Number(n||0).toLocaleString();
+
+// tool catalog → real plant system + purpose (toolbelt panel)
+const TOOLS={
+  read_timeline:['Historian','PI / OPC-UA','Read alarm timeline'],
+  read_maintenance_history:['CMMS','Maximo / Fiix','Check prior work orders'],
+  search_manual:['Manual RAG','OEM PDF','Find the procedure'],
+  check_parts:['ERP','Parts inventory','Check stock'],
+  check_safety_loto:['Safety','LOTO sheet','Confirm isolation'],
+  check_labor:['HRIS','Workday / BambooHR','Find certified tech'],
+  read_production_econ:['MES','OEE / downtime','Downtime context'],
+  search_shift_notes:['Shift notes','Handover log','Tribal knowledge'],
+  check_recent_changes:['MOC','Change control','What changed?'],
+  scan_ot_security:['Security','Config scan','OT-security check'],
+};
+const SRC_OF={read_timeline:'HISTORIAN',read_maintenance_history:'CMMS',search_manual:'MANUAL',
+  check_parts:'PARTS',check_safety_loto:'SAFETY',check_labor:'HR',read_production_econ:'MES',
+  search_shift_notes:'SHIFT_NOTES',check_recent_changes:'MOC',scan_ot_security:'SAFETY'};
+
+let DATA=null;
+function init(d){
+  DATA=d;
+  $('before').innerHTML=d.before_after.before.map(x=>`<li>${esc(x)}</li>`).join('');
+  $('after').innerHTML=d.before_after.after.map(x=>`<li>${esc(x)}</li>`).join('');
+  $('scenes').innerHTML=d.manifest.map(m=>
+    `<div class="scene-btn" data-id="${m.id}"><div class="n">SCENE ${m.id} · ${esc(m.decision)}</div>`+
+    `<div class="t">${esc(m.title)}</div><div class="d">${esc(m.tagline)}</div></div>`).join('');
+  [...document.querySelectorAll('.scene-btn')].forEach(b=>b.onclick=()=>select(+b.dataset.id));
+  select(1);
+}
+function select(id){
+  [...document.querySelectorAll('.scene-btn')].forEach(b=>b.classList.toggle('on',+b.dataset.id===id));
+  const s=DATA.scenes.find(x=>x.id===id);
+  $('view').innerHTML = s.kind==='ot_block' ? renderOT(s) : renderRun(s);
+}
+
+function decClass(d){return d==='ACT'?'s-ACT':d==='ABSTAIN'?'s-ABSTAIN':d==='NEED_MORE_INFO'?'s-NMI':'s-BLOCK'}
+
+function renderRun(s){
+  const r=s.run, dec=r.decision, wp=r.work_package;
+  let h=`<div class="status ${decClass(dec)}">Decision: ${esc(dec)} — ${esc(s.title)}<div class="tl">${esc(s.tagline)}</div></div>`;
+  h+='<div class="grid">';
+
+  // reasoning trace + did-not/blocked lines
+  h+='<div class="card"><div class="sect">Agent reasoning — it chooses each step</div><div class="trace">';
+  let n=1;
+  // show the gather steps, but always keep the decision-relevant lines (refute,
+  // re-plan, diagnosis, causal, abstain) even if they fall past the cutoff
+  const tl=(r.trace||[]).filter(t=>!/^memory:|persisted/i.test(t));
+  const keyRx=/REFUT|re-plann|verifier|DECISION|causal|hypothesis|abstain|NEED/i;
+  const shown=[...new Set(tl.slice(0,10).concat(tl.filter(t=>keyRx.test(t))))];
+  shown.forEach(t=>{
+    const cls=/REFUT|abstain|NEED|degraded|not /i.test(t)?'warn':'ok';
+    h+=`<div class="step"><span class="i">${n++}</span><span class="${cls}">${esc(t)}</span></div>`;});
+  h+='<div class="step"><span class="i">·</span><span class="bad">Did not write to PLC/SCADA — OT writes forbidden by construction.</span></div>';
+  if(dec==='ACT') h+='<div class="step"><span class="i">·</span><span class="mut">Did not create the work order yet — human approval required.</span></div>';
+  if((r.evidence_sufficiency||{}).score>=85) h+='<div class="step"><span class="i">·</span><span class="mut">Did not call vendor support — evidence was sufficient.</span></div>';
+  h+='</div></div>';
+
+  // toolbelt (only when the agent actually called tools)
+  if((r.tools_called||[]).length){
+    h+='<div class="card"><div class="sect">Toolbelt — every call is a real plant system</div><table class="tbl"><tr><th>Tool</th><th>System</th><th>Result</th></tr>';
+    (r.tools_called||[]).forEach(tn=>{
+      const meta=TOOLS[tn]; if(!meta) return;
+      let ev;
+      if(tn==='scan_ot_security') ev=(r.evidence_items||[]).find(e=>(e.tags||{}).security_issue);
+      else ev=(r.evidence_items||[]).find(e=>e.source_system===SRC_OF[tn]);
+      const res=ev?esc(ev.claim.slice(0,70)):(tn==='scan_ot_security'?'no OT-security findings':'checked');
+      h+=`<tr><td><b>${esc(meta[0])}</b></td><td class="mut">${esc(meta[1])}</td><td>${res}</td></tr>`;});
+    h+='</table></div>';
+  }
+
+  // evidence sufficiency + board
+  const suff=r.evidence_sufficiency||{score:0,items:[]};
+  h+='<div class="card full"><div class="sect">Evidence sufficiency — enough to act, not just confident</div>';
+  h+=`<div class="suff"><div class="num">${suff.score}<span style="font-size:13px;color:var(--faint)">/100</span></div>`+
+     `<div class="bar"><div class="fill" style="width:${suff.score}%;background:${suff.score>=85?'var(--it)':suff.score>=60?'var(--vf)':'var(--gt)'}"></div></div></div>`;
+  h+='<div>'+(suff.items||[]).map(i=>`<span class="pill ${i.status==='present'?'p-pass':i.status==='partial'?'p-part':'p-miss'}">${esc(i.label)}: ${i.status}</span>`).join('')+'</div>';
+  // board
+  const items=(r.evidence_items||[]).filter(e=>e.source_system!=='INCIDENT_MEMORY').slice(0,12);
+  if(items.length){h+='<div class="board" style="margin-top:10px">';
+    items.forEach(e=>{const t=e.tags||{};let st='ctx',l='context';if(t.conflict){st='con';l='contradicts'}else if(t.asserts_cause){st='sup';l='supports'}
+      const fr=e.freshness_s?(e.freshness_s>86400?Math.round(e.freshness_s/86400)+'d':Math.round(e.freshness_s/3600)+'h'):'live';
+      h+=`<div class="erow"><div class="src">${esc(e.source_system)}</div><div>${esc(e.claim.slice(0,150))}<div class="stance-${st}" style="font-size:10.5px">${l} · trust ${e.trust}</div></div><div class="mut" style="font-size:10.5px;text-align:right">w ${e.confidence}<br>${fr}</div></div>`;});
+    h+='</div>';}
+  h+='</div>';
+
+  // first-fault
+  if(r.causal_chain){const c=r.causal_chain;
+    h+='<div class="card full"><div class="sect">First-fault isolation — the actionable fault, not the loudest alarm</div>';
+    h+=`<div class="wo"><b class="ok">First actionable fault:</b> ${esc(c.first_actionable_fault)}`;
+    if((c.links||[]).length) h+=`<div class="mono" style="font-size:11.4px;margin-top:6px">${[c.first_actionable_fault].concat(c.links.map(l=>l.effect)).map(esc).join(' → ')}</div>`;
+    if((c.downstream_symptoms||[]).length) h+=`<div class="mut" style="margin-top:4px">Downstream (ignore as first action): ${esc(c.downstream_symptoms.join('; '))}</div>`;
+    h+='</div></div>';}
+
+  if(dec==='ACT'){
+    // recovery work package
+    h+='<div class="card full"><div class="sect">Recovery Work Package — the documents a tech assembles by hand</div>';
+    const wo=wp.work_order_draft;
+    h+=`<div class="wo"><b>Root cause:</b> ${esc(wp.likely_cause.cause)} (ISO ${esc(wp.likely_cause.iso14224_code)}) · confidence ${wp.confidence}<br>`+
+       `<span class="mut">would change my mind: ${esc(wp.likely_cause.would_change_my_mind)}</span></div>`;
+    h+=`<div class="wo"><b>Work order:</b> ${esc(wo.funcloc)} · risk ${esc(wo.risk)} · ${wo.est_minutes} min · ${wo.techs} tech · assigned <b>${esc(wo.tech||'—')}</b></div>`;
+    h+=`<div class="wo"><b>Parts reservation:</b> ${(wp.parts_request||[]).map(p=>esc(p.part_no)+' ('+esc(p.on_hand)+' on hand, bin '+esc(p.bin)+')').join(', ')||'none'}</div>`;
+    h+=`<div class="wo"><b>QC sampling plan:</b> AQL ${wp.qc_sampling_plan.aql} · n=${wp.qc_sampling_plan.n} · ${esc(wp.qc_sampling_plan.check)}</div>`;
+    const sh=wp.shift_handoff||{};
+    if(sh.monitor_next_shift) h+=`<div class="wo"><b>Shift handoff:</b> ${esc(sh.monitor_next_shift)}<br><span class="mut">${esc(sh.safety_loto||'')}</span></div>`;
+    if((wp.maintenance_patterns||[]).length){const p=wp.maintenance_patterns[0];
+      h+=`<div class="wo"><b>Pattern (CMMS):</b> ${esc(p.recommendation)}</div>`;}
+    if((wp.knowledge_candidates||[]).length){const k=wp.knowledge_candidates[0];
+      h+=`<div class="wo"><b>Tribal knowledge:</b> <span class="pill p-miss">${esc(k.status)}</span> ${esc(k.statement)} <span class="mut">(confirm with ${esc(k.confirms_with)})</span></div>`;}
+    h+='</div>';
+
+    // simulate-before-write
+    if(r.simulate_writes){const sw=r.simulate_writes;
+      h+='<div class="card"><div class="sect">Simulate-before-write — dry run before anything is committed</div>';
+      sw.planned.forEach(p=>h+=`<div class="kv"><span class="${p.ok?'ok':'warn'}">${p.ok?'✓':'!'}</span> <b>${esc(p.system)}.${esc(p.action.replace(/ /g,'_'))}</b> — ${esc(p.check)}</div>`);
+      h+=`<div class="mut" style="margin-top:6px">${esc(sw.note)}</div></div>`;}
+
+    // business value
+    const e=wp.economics;
+    h+='<div class="card"><div class="sect">Business value (this run)</div><div class="val">';
+    h+=`<div class="box"><div class="n">${e.manual_paperwork_min_avoided} min</div><div class="l">paperwork avoided</div></div>`;
+    h+=`<div class="box"><div class="n">${e.downtime_avoided_min} min</div><div class="l">downtime avoided</div></div>`;
+    h+=`<div class="box"><div class="n">${money(e.value_per_event_usd)}</div><div class="l">downtime protected</div></div>`;
+    h+=`<div class="box"><div class="n">${money(e.risk_adjusted_value_usd)}</div><div class="l">risk-adjusted value</div></div>`;
+    h+='</div></div>';
+
+    // IT writes
+    if((r.it_actions||[]).length){h+='<div class="card full"><div class="sect">IT writes — outcomes produced after approval (idempotent)</div>';
+      r.it_actions.forEach(a=>{const rec=a.record||{};let lab=rec.wo_id?('WO '+rec.wo_id):rec.reservation_id?('Reservation '+rec.reservation_id):rec.plan_id?('QC '+rec.plan_id):rec.to?('Notify '+rec.to):'';
+        h+=`<div class="kv mono"><span class="pill p-pass">${esc(a.system)}.${esc(a.action)}</span> ${esc(lab)}</div>`;});
+      h+='</div>';}
+  } else {
+    // NEED_MORE_INFO / ABSTAIN
+    if(r.missing_info){const mi=r.missing_info;
+      h+=`<div class="card full"><div class="sect">Need more info — ask for exactly one thing</div><div class="esc"><b>Need:</b> ${esc(mi.item)}<br><span class="mut">${esc(mi.why)}</span><div class="nx">→ ${esc(mi.how_to_provide)}</div><div class="mut" style="margin-top:4px">Unblocks: ${esc(mi.unblocks)}</div></div></div>`;}
+    if(r.escalation_packet){const ep=r.escalation_packet;
+      h+='<div class="card full"><div class="sect">Escalation packet — a blocked run that is still useful</div><div class="esc">';
+      h+=`<div class="kv"><b>Reported:</b> ${esc(ep.operator_reported)}</div>`;
+      h+=`<div class="kv"><b>Checked:</b> ${esc((ep.evidence_checked||[]).join(', '))}</div>`;
+      h+=`<div class="kv"><b>Missing:</b> ${esc((ep.evidence_missing||[]).join(', ')||'—')}</div>`;
+      h+=`<div class="kv"><b>Likely cause:</b> ${esc(ep.likely_cause||'undetermined')} (conf ${ep.confidence})</div>`;
+      h+=`<div class="kv"><b>Route to:</b> ${esc(ep.route_to)}</div>`;
+      h+=`<div class="nx">Next human step → ${esc(ep.next_human_step)}</div></div></div>`;}
+  }
+
+  // decision contract (always)
+  const dc=r.decision_contract;
+  if(dc){h+='<div class="card full"><div class="sect">Decision contract — what it may do, what it is blocked from doing</div><div class="contract">';
+    h+=`<div class="r"><b>Decision:</b> ${esc(dc.decision)} · confidence ${dc.confidence}</div>`;
+    h+=`<div class="r allow">✓ Allowed next action: ${esc(dc.allowed_next_action)}</div>`;
+    h+=`<div class="r allow">✓ Approved IT actions: ${esc((dc.approved_it_actions||[]).join(' · '))}</div>`;
+    h+=`<div class="r forbid">✗ Forbidden (enforced in code): ${esc((dc.forbidden_actions||[]).join(' · '))}</div>`;
+    if((dc.missing_evidence||[]).length) h+=`<div class="r">• Missing: ${esc(dc.missing_evidence.join(', '))}</div>`;
+    h+=`<div class="r mut">human approval required: ${dc.human_approval_required} · risk ${esc(dc.risk_class)} · audit ${esc((dc.audit_id||'').slice(0,12))}</div>`;
+    h+='</div></div>';}
+  h+='</div>';
+  return h;
+}
+
+function renderOT(s){
+  let h=`<div class="status s-BLOCK">Decision: BLOCKED — ${esc(s.title)}<div class="tl">${esc(s.tagline)}</div></div>`;
+  h+='<div class="card full"><div class="sect">Attempted OT writes — every one blocked by construction</div>';
+  s.attempts.forEach(a=>{h+=`<div class="otrow"><span class="mono">${esc(a.attempt)} <span class="mut">[${esc(a.plane)}]</span></span><span class="blocked">⛔ ${esc(a.result)}</span></div>`;});
+  h+=`<div class="wo" style="margin-top:10px">${esc(s.summary)}</div>`;
+  h+=`<div class="kv mut" style="margin-top:6px">writable planes: ${esc((s.writable_planes||[]).join(', ')||'IT_BUSINESS only')}</div>`;
+  h+='</div>';
+  return h;
+}
+
+fetch('/api/scenes').then(r=>r.json()).then(init)
+  .catch(()=>fetch('../_it_state/demo.json').then(r=>r.json()).then(init)
+  .catch(()=>{$('view').innerHTML='<div class="card"><div class="bad">Could not load scenes. Run <code>python -m restartos.cli demo</code> or start the server.</div></div>'}));
+</script></body></html>

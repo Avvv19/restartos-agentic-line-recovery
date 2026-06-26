@@ -146,6 +146,26 @@ def _print_contract(res):
     print(f"  audit id           : {dc['audit_id']}")
 
 
+def cmd_demo(args):
+    """Generate the five deterministic demo scenes + write an artifact the demo
+    cockpit (and judges) can load offline."""
+    from .demo import build_all
+    eng = RestartOSEngine(config_dir=args.config, data_root=args.data)
+    data = build_all(eng)
+    out_dir = os.path.join(eng.dr.root, "..", "_it_state")
+    os.makedirs(out_dir, exist_ok=True)
+    path = os.path.abspath(os.path.join(out_dir, "demo.json"))
+    json.dump(data, open(path, "w", encoding="utf-8"), indent=2, default=str)
+    print("=" * 74)
+    print("RESTART OS — DETERMINISTIC DEMO SCENES")
+    print("=" * 74)
+    for m in data["manifest"]:
+        print(f"  Scene {m['id']}  [{m['decision']:<22}] {m['title']}")
+        print(f"           {m['tagline']}")
+    print(f"\n[artifact] {path}")
+    print("Open the demo cockpit:  python -m restartos.server  ->  http://localhost:8000/demo")
+
+
 def cmd_eval(args):
     from .evals import run_evals
     r = run_evals(config_dir=args.config, data_root=args.data)
@@ -244,6 +264,7 @@ def main():
     r.set_defaults(func=cmd_run)
 
     e = sub.add_parser("eval"); e.set_defaults(func=cmd_eval)
+    d = sub.add_parser("demo"); d.set_defaults(func=cmd_demo)
     rg = sub.add_parser("rag")
     rg.add_argument("query")
     rg.add_argument("-k", type=int, default=3)

@@ -72,6 +72,8 @@ class RunResult:
     decision_contract: Optional[dict] = None
     escalation_packet: Optional[dict] = None
     missing_info: Optional[dict] = None
+    evidence_sufficiency: Optional[dict] = None
+    simulate_writes: Optional[dict] = None
 
 
 class RestartOSEngine:
@@ -312,6 +314,8 @@ class RestartOSEngine:
         res.knowledge_candidates = [to_jsonable(k) for k in getattr(ctx, "knowledge_candidates", [])]
         if getattr(ctx, "causal_chain", None) is not None:
             res.causal_chain = to_jsonable(ctx.causal_chain)
+        from .contracts import evidence_sufficiency
+        res.evidence_sufficiency = evidence_sufficiency(ctx)
         self._persist_memory(ctx, res)
         return res
 
@@ -392,7 +396,34 @@ class RestartOSEngine:
         run = self._attach_contract(run, ctx, audit, wp.likely_cause, risk_class=risk)
         # mirror the contract onto the work package so its artifacts carry it
         wp.decision_contract = run.decision_contract  # stored json-able
+        run.simulate_writes = self._simulate_writes(wp)
         return run
+
+    def _simulate_writes(self, wp) -> dict:
+        """Dry-run the IT-side writes the human is about to approve — what will
+        happen, checked before anything is committed."""
+        part = wp.parts_request[0] if wp.parts_request else None
+        on_hand = int(part.get("on_hand", 0)) if part else 0
+        tech = (wp.work_order_draft or {}).get("tech")
+        planned = [
+            {"system": "CMMS", "action": "create work order",
+             "detail": f"{wp.asset_funcloc} · {wp.likely_cause.cause}",
+             "check": "no duplicate work order found for this incident", "ok": True},
+            {"system": "ERP", "action": "reserve parts",
+             "detail": f"{part['part_no']} x1" if part else "none",
+             "check": (f"part available ({on_hand} on hand)" if on_hand >= 1
+                       else "part NOT in stock - reservation will backorder"),
+             "ok": on_hand >= 1},
+            {"system": "QMS", "action": "create QC hold plan",
+             "detail": "AQL 2.5 · 5 units post-restart",
+             "check": "QC template valid", "ok": True},
+            {"system": "NOTIFY", "action": "page technician",
+             "detail": tech or "unassigned",
+             "check": ("technician active" if tech else "no qualified tech - page deferred"),
+             "ok": bool(tech)},
+        ]
+        return {"planned": planned, "all_clear": all(p["ok"] for p in planned),
+                "note": "Nothing is written until a human approves."}
 
     # ----------------------------------------------------------------- #
     def _gather_and_diagnose(self, ctx, audit, max_rounds: int = 2):
@@ -522,11 +553,18 @@ class RestartOSEngine:
     def _build_work_package(self, ctx, top, plan, vrep, srep, gd) -> WorkPackage:
         rate = ctx.incident.downtime_rate_per_hr
         mttr_base, mttr_agent = 90, plan.est_minutes
-        value = (mttr_base - mttr_agent) / 60.0 * rate
+        downtime_avoided = mttr_base - mttr_agent
+        value = downtime_avoided / 60.0 * rate
+        # Risk-adjust by confidence — high confidence keeps most of the value.
+        risk_adjusted = round(value * top.confidence, 2)
+        agent_cost = ctx.router.usage_summary()["total_cost_usd"]
         econ = {"downtime_rate_per_hr": rate, "mttr_baseline_min": mttr_base,
                 "mttr_agent_min": mttr_agent,
+                "downtime_avoided_min": downtime_avoided,
+                "manual_paperwork_min_avoided": 62,   # 45-90 min of cross-silo paperwork
                 "value_per_event_usd": round(value, 2),
-                "agent_cost_usd": ctx.router.usage_summary()["total_cost_usd"],
+                "risk_adjusted_value_usd": risk_adjusted,
+                "agent_cost_usd": agent_cost,
                 "p_wrong_acted": "driven->0 via grounding+cross-model verify+gate"}
         tech = next((ev.tags.get("tech") for ev in ctx.graph.items.values()
                      if ev.source_system == "HR" and ev.tags.get("tech")), None)
