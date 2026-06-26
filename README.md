@@ -241,12 +241,15 @@ flowchart TD
     end
 
     subgraph CORE["🧠 Restart OS Engine"]
+        IN["Operator Intake<br/>messy report → Incident"]
         OE["Orchestration Engine<br/>(LangGraph-compatible)"]
         AL["Agentic Tool-Use Loop<br/>(10 typed tools)"]
         EG["Evidence Graph<br/>trust × confidence × freshness"]
+        FF["First-Fault Isolation<br/>(causal chain)"]
         DV["Diagnose → Plan"]
         CV["Cross-Model Verifier<br/>(different model family)"]
         SF["Safety Pre-Check"]
+        DC["Decision<br/>ACT · ABSTAIN · NEED_MORE_INFO<br/>+ Decision Contract"]
         GT["Authorization Gate<br/>(role + economics)"]
     end
 
@@ -266,14 +269,17 @@ flowchart TD
     HRIS["HRIS<br/>(BambooHR)"]
     HUMAN["👤 Human Approve / Reject"]
 
+    IN --> OE
     H --> AL
     M --> AL
     HRIS --> AL
     AL --> EG
-    EG --> DV
+    EG --> FF
+    FF --> DV
     DV --> CV
     CV --> SF
-    SF --> GT
+    SF --> DC
+    DC --> GT
     GT --> HUMAN
     HUMAN -.approved.-> CMMS
     HUMAN -.approved.-> ERP
@@ -290,7 +296,7 @@ flowchart TD
     classDef human fill:#1a1308,stroke:#f97316,color:#fed7aa
 
     class H,M ot
-    class OE,AL,EG,DV,CV,SF,GT core
+    class IN,OE,AL,EG,FF,DV,CV,SF,DC,GT core
     class QD,PG,AU mem
     class CMMS,ERP,QMS,NOT it
     class HUMAN human
@@ -317,8 +323,11 @@ restartos-agentic-line-recovery/
 │
 ├── 🧠 restartos/                      ← the engine
 │   ├── orchestration.py               ← the state machine
+│   ├── intake.py                      ← freeform operator report → Incident
 │   ├── agents.py                      ← 10 specialist lenses
 │   ├── agent_loop.py                  ← agentic tool-use loop
+│   ├── causal.py                      ← first-fault isolation + causal chain
+│   ├── contracts.py                   ← Decision Contract + Escalation Packet
 │   ├── evidence.py                    ← shared evidence graph
 │   ├── domain.py                      ← Incident, RecoveryPlan, Decision
 │   ├── memory.py                      ← Postgres incident memory
@@ -370,6 +379,8 @@ PYTHONPATH=. python -m restartos.cli boundary-test  # proves OT writes blocked
 |---|---|
 | `GET /` | Landing page (this README in your browser) |
 | `GET /cockpit` | Operator UI for the latest run |
+| `POST /api/intake` | Parse a freeform operator message into a structured incident (preview) |
+| `POST /api/run` | Run a fault-to-fix; accepts a structured incident **or** a freeform `message` |
 | `GET /api/latest_run` | Full JSON of the most recent run |
 | `GET /api/memory` | Postgres memory stats |
 | `GET /api/rag?q=...` | Semantic search over the OEM corpus |

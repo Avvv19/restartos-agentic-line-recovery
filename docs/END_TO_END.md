@@ -34,6 +34,13 @@ It is slow, it is tribal, and it bleeds money every minute the line is down.
 ## 2. The architecture
 
 ```
+   ┌───────────────────────┐
+   │  OPERATOR INTAKE      │  "L3 filler keeps stopping, bottles backing
+   │  (intake.py)          │   up at the capper, A-220, before 3 PM"
+   │  messy report →       │        → line, machine, symptom, alarm,
+   │  structured Incident  │          urgency, product, deadline, missing
+   └──────────┬────────────┘
+              ▼
                 ┌───────────────────┐
    Incident →→→ │  ORCHESTRATION    │
    (asset, alarm,│  ENGINE           │←── settings.yaml (tau, budget)
@@ -67,6 +74,13 @@ It is slow, it is tribal, and it bleeds money every minute the line is down.
                       │
                       ▼
    ┌──────────────────────────────────────────────────────┐
+   │  FIRST-FAULT ISOLATION (causal.py)                  │
+   │  root fault vs downstream symptom vs repeated alarm  │
+   │  e.g. nozzle clog → low flow → servo overload →     │
+   │       bottle backup at capper (the loud symptom)     │
+   └──────────────────┬───────────────────────────────────┘
+                      ▼
+   ┌──────────────────────────────────────────────────────┐
    │  HYPOTHESIS  →  PLAN  →  CROSS-MODEL VERIFY          │
    │  (NIM author)    (manual-grounded)  (Groq — different│
    │                                      family;          │
@@ -75,9 +89,10 @@ It is slow, it is tribal, and it bleeds money every minute the line is down.
                       │
                       ▼
    ┌──────────────────────────────────────────────────────┐
-   │  SAFETY PRE-CHECK  →  AUTHORIZATION GATE             │
-   │  (LOTO present?      (role-matched, economics-routed,│
-   │   permit ok?)         e-sign for LOTO_PHYSICAL)      │
+   │  SAFETY PRE-CHECK  →  DECISION  →  AUTHORIZATION GATE│
+   │  (LOTO present?    ACT / ABSTAIN /  (role-matched,    │
+   │   permit ok?)      NEED_MORE_INFO    economics-routed,│
+   │                                      e-sign for LOTO) │
    └──────────────────┬───────────────────────────────────┘
                       │ approved
                       ▼
@@ -90,11 +105,13 @@ It is slow, it is tribal, and it bleeds money every minute the line is down.
    │  NOTIFY.notify (tech selected from HR roster)        │
    └──────────────────────────────────────────────────────┘
 
-   Every step recorded in a hash-chained audit log.
+   Every run ends with a Decision Contract (allowed action, forbidden OT writes,
+   approved IT actions, evidence used/missing, risk, audit id) — or an Escalation
+   Packet when blocked. Every step recorded in a hash-chained audit log.
    Three architectural guarantees, enforced in code:
-     ① No path can WRITE to OT planes  (security.py)
-     ② Every citation must resolve     (verify.py)
-     ③ Decision = ACT | ABSTAIN        (orchestration.py — honest uncertainty)
+     ① No path can WRITE to OT planes        (security.py)
+     ② Every citation must resolve           (verify.py)
+     ③ Decision = ACT | ABSTAIN | NEED_MORE_INFO (orchestration.py — honest uncertainty)
 ```
 
 ---
@@ -217,7 +234,9 @@ PYTHONIOENCODING=utf-8 PYTHONPATH=. python -m restartos.server --port 8000
 
 | Endpoint | What it does |
 |---|---|
-| `GET /cockpit` | Operator UI (the screenshot above) |
+| `GET /cockpit` | Operator UI (the screenshot above) — includes the freeform intake box, evidence board, decision contract |
+| `POST /api/intake` | Parse a freeform operator message into a structured incident (preview) |
+| `POST /api/run` | Run a fault-to-fix; accepts a structured incident **or** a freeform `message` |
 | `GET /api/latest_run` | Full JSON of the most recent run |
 | `GET /api/memory` | Postgres memory stats |
 | `GET /api/rag?q=nozzle+clog` | Live semantic query over the OEM manuals |
@@ -282,9 +301,9 @@ The verifier runs on a *different model family* than the planner (NIM Nemotron a
 
 That is exactly the failure mode visible in the regression matrix runs: 3 scenarios produced a high-confidence diagnosis (0.84–1.0) but the verifier could not ground the plan to its satisfaction → abstain with reason. **This is the anti-hallucination guardrail firing as designed.**
 
-### 6.3 It can say "I don't know"
+### 6.3 It can say "I don't know" — or "I need one more thing"
 
-`Decision.ABSTAIN` is a first-class outcome, not an exception. The system has actually abstained 11 times out of 21 runs (52% abstention rate, visible in `/metrics`). That is not a bug. That is honest uncertainty — the property without which no industrial AI can be trusted to write a work order.
+The decision is three-way. `Decision.ABSTAIN` is a first-class outcome, not an exception — the system has actually abstained 11 times out of 21 runs (52% abstention rate, visible in `/metrics`). `Decision.NEED_MORE_INFO` is the middle path: when one specific human-supplied input would unblock the call (a missing alarm code, an unverified alarm not in the OEM fault map, an absent line number), the agent asks for exactly that instead of guessing or refusing outright. Either way a blocked run still produces an **Escalation Packet** with the exact next human step, and every run produces a **Decision Contract**. That is honest uncertainty — the property without which no industrial AI can be trusted to write a work order.
 
 ---
 
