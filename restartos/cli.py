@@ -13,6 +13,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import sys
 
 from .domain import GateOutcome, Incident, Severity, to_jsonable
 from .orchestration import RestartOSEngine
@@ -24,9 +25,20 @@ def _approver_auto(_decision) -> GateOutcome:
 
 def cmd_run(args):
     eng = RestartOSEngine(config_dir=args.config, data_root=args.data)
-    inc = Incident(asset_hint=args.hint, symptom=args.symptom, line=args.line,
-                   alarm_code=args.alarm, downtime_rate_per_hr=args.rate,
-                   severity=Severity(args.severity))
+    if getattr(args, "message", None):
+        # Freeform operator intake: parse the messy report into an Incident.
+        from .intake import parse_message, intake_to_incident
+        from .domain import to_jsonable
+        intake = parse_message(args.message)
+        inc = intake_to_incident(intake, downtime_rate_per_hr=args.rate)
+        print("OPERATOR INTAKE (parsed from freeform message)")
+        print("  " + json.dumps(to_jsonable(intake), indent=2).replace("\n", "\n  "))
+        if intake.missing_details:
+            print(f"  missing: {intake.missing_details}\n")
+    else:
+        inc = Incident(asset_hint=args.hint, symptom=args.symptom, line=args.line,
+                       alarm_code=args.alarm, downtime_rate_per_hr=args.rate,
+                       severity=Severity(args.severity))
     approver = _approver_auto if args.auto_approve else None
     res = eng.run(inc, approver=approver)
     artifact = to_jsonable(res.__dict__)
@@ -48,9 +60,31 @@ def _print_run(res):
     print("\nAGENT TRACE")
     for t in res.trace:
         print(f"  - {t}")
-    if res.decision.value == "ABSTAIN":
-        print("\nABSTAIN / ESCALATE")
-        print("  " + json.dumps(res.escalation, indent=2).replace("\n", "\n  "))
+    if res.causal_chain:
+        cc = res.causal_chain
+        print("\nFIRST-FAULT ISOLATION")
+        print(f"  first actionable fault: {cc['first_actionable_fault']}")
+        if cc.get("downstream_symptoms"):
+            print(f"  downstream (ignore as first action): {cc['downstream_symptoms']}")
+    if res.decision.value in ("ABSTAIN", "NEED_MORE_INFO"):
+        title = "NEED MORE INFO" if res.decision.value == "NEED_MORE_INFO" else "ABSTAIN / ESCALATE"
+        print(f"\n{title}")
+        if res.missing_info:
+            mi = res.missing_info
+            print(f"  need: {mi['item']}")
+            print(f"  why : {mi['why']}")
+            print(f"  how : {mi['how_to_provide']}")
+        if res.escalation_packet:
+            ep = res.escalation_packet
+            print("\nESCALATION PACKET")
+            print(f"  reported     : {ep['operator_reported']}")
+            print(f"  checked      : {ep['evidence_checked']}")
+            print(f"  missing      : {ep['evidence_missing']}")
+            print(f"  blocked by   : {ep['blocking_reason'] or '(see need/contradiction)'}")
+            print(f"  likely cause : {ep['likely_cause']} (conf {ep['confidence']})")
+            print(f"  route to     : {ep['route_to']}")
+            print(f"  NEXT STEP    : {ep['next_human_step']}")
+        _print_contract(res)
     else:
         wp = res.work_package
         print(f"\nDIAGNOSIS  (confidence {wp.confidence})")
@@ -80,11 +114,36 @@ def _print_run(res):
                 print(f"  - {a['system']}.{a['action']}  created={a['created']}  key={a['idempotency_key']}")
         print(f"\nECONOMICS  {json.dumps(wp.economics)}")
         print(f"\nSHIFT HANDOVER\n  {wp.shift_handover}")
+        if wp.maintenance_patterns:
+            print("\nMAINTENANCE PATTERNS (mined from CMMS history)")
+            for p in wp.maintenance_patterns[:3]:
+                print(f"  - {p.recommendation}")
+        if wp.knowledge_candidates:
+            print("\nTRIBAL KNOWLEDGE CAPTURED (unverified — needs lead sign-off)")
+            for k in wp.knowledge_candidates[:3]:
+                print(f"  - [{k.status}] {k.statement}  (confirm with {k.confirms_with})")
+        _print_contract(res)
     u = res.router_usage
     print(f"\nMODEL ROUTER  calls={u['total_calls']} tokens={u['total_tokens']} "
           f"cost=${u['total_cost_usd']} providers={u['providers_used']}")
     print(f"  by problem type: {json.dumps(u['by_problem_type'])}")
     print(f"\nEVIDENCE GRAPH  {json.dumps(res.evidence_summary)}")
+
+
+def _print_contract(res):
+    dc = res.decision_contract
+    if not dc:
+        return
+    print("\nDECISION CONTRACT")
+    print(f"  decision           : {dc['decision']}")
+    print(f"  allowed next action: {dc['allowed_next_action']}")
+    print(f"  human approval req : {dc['human_approval_required']}")
+    print(f"  approved IT actions: {dc['approved_it_actions']}")
+    print(f"  FORBIDDEN (by code): {dc['forbidden_actions']}")
+    if dc["missing_evidence"]:
+        print(f"  missing evidence   : {dc['missing_evidence']}")
+    print(f"  risk class         : {dc['risk_class']}")
+    print(f"  audit id           : {dc['audit_id']}")
 
 
 def cmd_eval(args):
@@ -155,13 +214,26 @@ def cmd_boundary(args):
             print(f"  OK  : write to {plane.value} blocked -> {e}")
 
 
+def _force_utf8_stdout():
+    """Windows consoles default to cp1252, which chokes on the arrows/§ in the
+    trace. Reconfigure to UTF-8 so the demo prints cleanly on every OS."""
+    for stream in (sys.stdout, sys.stderr):
+        try:
+            stream.reconfigure(encoding="utf-8", errors="replace")
+        except Exception:
+            pass
+
+
 def main():
+    _force_utf8_stdout()
     p = argparse.ArgumentParser("restartos")
     p.add_argument("--config", default="config")
     p.add_argument("--data", default=None)
     sub = p.add_subparsers(dest="cmd", required=True)
 
     r = sub.add_parser("run")
+    r.add_argument("--message", default=None,
+                   help="freeform operator report; parsed into a structured incident")
     r.add_argument("--hint", default="Line 3 filler")
     r.add_argument("--symptom", default="down")
     r.add_argument("--line", default="Line 3")

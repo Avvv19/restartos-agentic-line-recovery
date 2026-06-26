@@ -22,7 +22,8 @@ from .data import (AssetRegistry, CMMSAdapter, HistorianAdapter, ManualAdapter,
                    MESAdapter, MOCAdapter, PartsAdapter, SafetyAdapter,
                    SecurityScanner, ShiftNotesAdapter, DataRoot)
 from .data.adapters import SOURCE_TRUST, ResolvedAsset
-from .domain import (Citation, Evidence, Hypothesis, Incident, Plane,
+from .domain import (Citation, Evidence, Hypothesis, Incident,
+                     KnowledgeCandidate, MaintenancePattern, Plane,
                      ProcedureStep, RecoveryPlan, RiskClass)
 from .evidence import EvidenceGraph
 from .llm.router import ModelRouter, ProblemType
@@ -44,6 +45,9 @@ class Context:
     reasoning_engine: str = "unset"
     tool_policy: str = "unset"
     tools_called: list = field(default_factory=list)
+    maintenance_patterns: list = field(default_factory=list)  # mined repeat-failures
+    knowledge_candidates: list = field(default_factory=list)   # captured tribal knowledge
+    causal_chain: object = None
 
     def log(self, msg: str) -> None:
         self.trace.append(msg)
@@ -130,6 +134,24 @@ class MaintenanceAgent:
                 Citation("CMMS", conf["wo_id"], True),
                 asset=ctx.asset.funcloc, asserts_cause=conf["causes"][0],
                 exclusive=True, conflict=True, _by=self.name))
+
+        # --- repeat-failure pattern mining (institutional memory) ---------- #
+        for pat in CMMSAdapter(ctx.dr).patterns(ctx.asset.funcloc):
+            mp = MaintenancePattern(
+                asset_funcloc=ctx.asset.funcloc, pattern=pat["recommendation"],
+                occurrences=pat["occurrences"], window_days=pat["window_days"],
+                repeated_part=pat["repeated_part"],
+                repair_failed_within_h=pat["repair_failed_within_h"],
+                symptom_only_fix=pat["symptom_only_fix"],
+                recommendation=pat["recommendation"])
+            ctx.maintenance_patterns.append(mp)
+            if pat["occurrences"] >= 3:
+                ctx.graph.add(_ev(
+                    f"Repeat-failure pattern: {pat['recommendation']}",
+                    "CMMS", Plane.IT_BUSINESS, 0.7, ctx,
+                    Citation("CMMS", "work_orders.csv", True),
+                    asset=ctx.asset.funcloc, asserts_cause=pat["cause"],
+                    repeat_count=pat["occurrences"], _by=self.name))
 
 
 class ManualAgent:
@@ -300,12 +322,22 @@ class ShiftNotesAgent:
     def run(self, ctx: Context) -> None:
         terms = ["a-220", "clog", "nozzle", ctx.asset.line.lower(), "flow"]
         for hit in ShiftNotesAdapter(ctx.dr).search(terms, limit=2):
+            sentence = _first_sentence(hit["text"])
             ctx.graph.add(_ev(
                 f"Shift note {hit['file']}: tribal knowledge lead (low trust) — "
-                f"\"{_first_sentence(hit['text'])}\"",
+                f"\"{sentence}\"",
                 "SHIFT_NOTES", Plane.IT_BUSINESS, 0.5, ctx,
                 Citation("SHIFT_NOTES", hit["citation"], True),
                 asset=ctx.asset.funcloc, asserts_cause="Nozzle clog", _by=self.name))
+            # Capture it as an explicitly UNVERIFIED knowledge candidate. Informal
+            # human know-how is useful but must be confirmed before it becomes a
+            # trusted playbook — that lifecycle is the whole point.
+            ctx.knowledge_candidates.append(KnowledgeCandidate(
+                statement=sentence, source=f"shift_note:{hit['file']}",
+                status="unverified",
+                confirms_with="maintenance lead",
+                suggested_memory=(f"Candidate playbook for {ctx.asset.funcloc}: "
+                                  f"{sentence}")))
 
 
 class SecurityAgent:

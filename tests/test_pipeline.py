@@ -22,7 +22,10 @@ def test_happy_path_diagnoses_clog_and_acts():
     assert res.safety["passed"]
 
 
-def test_verifier_catches_hallucinated_citation_then_replans():
+def test_verifier_catches_hallucinated_citation_then_replans(monkeypatch):
+    # Force the planner's first pass to cite a non-existent page so we can prove
+    # the cross-model verifier refutes it and the engine self-corrects on re-plan.
+    monkeypatch.setenv("RESTARTOS_DEMO_REPLAN", "1")
     res = _engine().run(Incident("Line 3 filler", "down", "Line 3", "A-220"),
                         approver=lambda d: GateOutcome.APPROVED)
     # first-pass refutation appears in the trace, final plan is grounded

@@ -54,3 +54,6 @@ postgres_data/
 test_write.txt
 scratch/
 tmp/
+
+# Generated dataset (built by dataset/generate.py)
+_data/

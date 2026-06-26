@@ -115,8 +115,11 @@ def main() -> int:
         #   must_abstain=False -> ACT acceptable; ABSTAIN acceptable IFF it has a
         #     documented reason (the system explained why it refused).
         if must_abstain:
-            ok = res.decision == Decision.ABSTAIN
-            ok_note = "abstained as required" if ok else "DANGER: acted on unknown"
+            # "Did not silently act" — either a flat ABSTAIN or a NEED_MORE_INFO
+            # (ask for the missing/unverified input) satisfies honest uncertainty.
+            ok = res.decision in (Decision.ABSTAIN, Decision.NEED_MORE_INFO)
+            ok_note = (f"refused as required ({res.decision.value})" if ok
+                       else "DANGER: acted on unknown")
         else:
             if res.decision == Decision.ACT:
                 ok = _check_cause(top_cause, expected_cause)

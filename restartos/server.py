@@ -221,14 +221,26 @@ class Handler(BaseHTTPRequestHandler):
         n = int(self.headers.get("Content-Length", 0))
         body = json.loads(self.rfile.read(n) or "{}") if n else {}
         try:
+            if u.path == "/api/intake":
+                # Preview the structured parse of a freeform operator message.
+                from .intake import parse_message
+                intake = parse_message(body.get("message", ""))
+                return self._json(to_jsonable(intake))
             if u.path == "/api/run":
-                inc = Incident(
-                    asset_hint=body.get("hint", "Line 3 filler"),
-                    symptom=body.get("symptom", "down"),
-                    line=body.get("line", "Line 3"),
-                    alarm_code=body.get("alarm") or None,
-                    downtime_rate_per_hr=float(body.get("rate", 10000)),
-                    severity=Severity(body.get("severity", "HIGH")))
+                msg = body.get("message")
+                if msg:
+                    from .intake import parse_message, intake_to_incident
+                    intake = parse_message(msg)
+                    inc = intake_to_incident(
+                        intake, downtime_rate_per_hr=float(body.get("rate", 10000)))
+                else:
+                    inc = Incident(
+                        asset_hint=body.get("hint", "Line 3 filler"),
+                        symptom=body.get("symptom", "down"),
+                        line=body.get("line", "Line 3"),
+                        alarm_code=body.get("alarm") or None,
+                        downtime_rate_per_hr=float(body.get("rate", 10000)),
+                        severity=Severity(body.get("severity", "HIGH")))
                 approver = (lambda d: GateOutcome.APPROVED) if body.get("auto_approve", True) else None
                 res = _engine().run(inc, approver=approver)
                 return self._json(to_jsonable(res.__dict__))

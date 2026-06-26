@@ -46,6 +46,28 @@ A production line goes down. A senior maintenance technician spends 45 to 90 min
 
 ---
 
+## 🧩 From a messy note to a signed-off decision
+
+The agent starts where the shop floor actually starts — a free-text report — and ends with a contract a human can trust.
+
+| Stage | What it does |
+|---|---|
+| **Operator intake** | Parses a messy report ("L3 filler keeps stopping, bottles backing up at the capper, A-220, restart before 3 PM") into line, machine, symptom, alarm, urgency, product, deadline, safety concern — and flags what's missing. |
+| **First-fault isolation** | Separates the *first actionable fault* from the loud downstream symptom. A bottle backup at the capper is downstream of a filler that stopped flowing — the agent says so instead of chasing the noise. |
+| **Evidence board** | Every system it checked, what it found, whether the evidence supports or contradicts the diagnosis, how fresh it is, and how much it counts. |
+| **Maintenance pattern mining** | Mines the CMMS history for repeat failures: same fault N times in a window, the same part replaced again and again, symptom-only fixes that never resolve the root cause. |
+| **Tribal-knowledge capture** | Lifts reusable know-how out of free-text shift notes and marks it **unverified** until a maintenance lead promotes it — informal notes never silently become doctrine. |
+| **Three-way decision** | Not just ACT vs ABSTAIN. When one specific input would unblock a call, the agent returns **NEED_MORE_INFO** and asks for exactly that. |
+| **Decision contract** | Every run ends with a plain contract: the decision, the allowed next action, the IT-side actions a human may approve, the actions forbidden by construction (any PLC/SCADA/OT write), the evidence used and still missing, the risk class, and the audit id. |
+| **Escalation packet** | A blocked run is still useful — it hands the next shift what was checked, what was missing, what blocked it, the likely cause, who to route to, and the exact next human step. |
+
+```bash
+# run straight from a free-text operator report
+python -m restartos.cli run --message "L3 filler keeps stopping, bottles backing up at the capper, A-220, restart before 3 PM" --auto-approve
+```
+
+---
+
 ## 🟡 The 3-4 Week Calibration Window
 
 > **Restart OS is forbidden from autonomously dispatching work orders on your real line until it spends 3 to 4 weeks in shadow mode, on your plant's own incidents, with a maintenance lead reviewing every proposal.**
@@ -410,6 +432,23 @@ A: It calls your HRIS (BambooHR or Workday) for the live shift roster, filters b
 
 **Q: What if it's wrong?**
 A: The cross-model verifier rejects it. The human gate rejects it. If both miss, the hash-chained audit log shows exactly which evidence the agent based its decision on. Idempotent writes mean a wrong work order can be cancelled without double-creation.
+
+---
+
+## 👥 Contributors
+
+Restart OS is built and maintained by **[Avvv19](https://github.com/Avvv19)**.
+
+The reasoning, drafting, and cross-model verification layers are powered by three independent model families — kept deliberately separate so no single model both authors and checks a plan:
+
+| Contributor | Role in the system |
+|---|---|
+| **OpenAI** | Author-tier reasoning / planning (pluggable via `.env`) |
+| **Claude** | Author-tier reasoning / planning (pluggable via `.env`) |
+| **Gemini** | Cross-model verifier family (anti-collusion check) |
+| **Avvv19** | Architecture, engine, dataset, evaluation, and product |
+
+Any of the model tiers can be swapped for NVIDIA NIM, Groq, or local Ollama in `config/model_routing.yaml` — the anti-collusion contract (different family for author vs. verifier) holds regardless of which providers are wired in.
 
 ---
 

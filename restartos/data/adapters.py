@@ -62,7 +62,7 @@ class AssetRegistry:
     def __init__(self, dr: DataRoot) -> None:
         self.dr = dr
         self.rows: list[dict] = []
-        with open(dr.path("asset_registry.csv")) as f:
+        with open(dr.path("asset_registry.csv"), encoding="utf-8") as f:
             self.rows = list(csv.DictReader(f))
 
     def resolve(self, hint: str) -> Optional[ResolvedAsset]:
@@ -128,7 +128,7 @@ class HistorianAdapter:
         vals, stale, missing = [], 0, 0
         uom = ""
         for fp in target:
-            with open(fp) as f:
+            with open(fp, encoding="utf-8") as f:
                 for row in csv.DictReader(f):
                     uom = row.get("uom", uom)
                     if row["quality"] == "Bad" or row["value"] == "":
@@ -158,7 +158,7 @@ class MESAdapter:
 
     def downtime_for(self, mes_id: str) -> list[dict]:
         out = []
-        with open(self.dr.path("mes", "oee_daily.csv")) as f:
+        with open(self.dr.path("mes", "oee_daily.csv"), encoding="utf-8") as f:
             for r in csv.DictReader(f):
                 if r["mes_asset_id"] == mes_id and int(r["downtime_min"]) > 0:
                     out.append(r)
@@ -174,7 +174,7 @@ class MESAdapter:
 class CMMSAdapter:
     def __init__(self, dr: DataRoot) -> None:
         self.dr = dr
-        with open(dr.path("cmms", "work_orders.csv")) as f:
+        with open(dr.path("cmms", "work_orders.csv"), encoding="utf-8") as f:
             self.wos = list(csv.DictReader(f))
 
     def history(self, funcloc: str) -> list[dict]:
@@ -197,6 +197,78 @@ class CMMSAdapter:
         top = sorted(causes.items(), key=lambda kv: -kv[1])
         return {"counts": dict(top), "top_cause": top[0][0] if top else None,
                 "n_wo": len(h), "conflicts": conflicts}
+
+    def patterns(self, funcloc: str, window_days: int = 21) -> list[dict]:
+        """Mine the work-order history for REPEAT-FAILURE signals — the thing a
+        one-off troubleshooting helper never sees. Surfaces: same cause N times
+        in a rolling window, the same part replaced over and over, a repair that
+        failed again within ~24h, and symptom-only fixes that never resolve the
+        root cause."""
+        from collections import Counter
+        from datetime import datetime
+
+        def _date(s):
+            for fmt in ("%Y-%m-%d", "%Y/%m/%d"):
+                try:
+                    return datetime.strptime((s or "").strip(), fmt)
+                except (ValueError, TypeError):
+                    continue
+            return None
+
+        h = self.history(funcloc)
+        by_cause: dict[str, list[dict]] = {}
+        for w in h:
+            by_cause.setdefault(w.get("cause", "?"), []).append(w)
+
+        out: list[dict] = []
+        for cause, wos in by_cause.items():
+            if len(wos) < 2:
+                continue
+            dated = sorted([w for w in wos if _date(w.get("open_date"))],
+                           key=lambda w: _date(w["open_date"]))
+            # tightest rolling window containing the most occurrences
+            window_max, i = 1, 0
+            for j in range(len(dated)):
+                while (_date(dated[j]["open_date"]) - _date(dated[i]["open_date"])).days > window_days:
+                    i += 1
+                window_max = max(window_max, j - i + 1)
+
+            parts = Counter(p.strip() for w in wos
+                            for p in (w.get("parts_used", "") or "").split(",") if p.strip())
+            repeated_part = parts.most_common(1)[0][0] if parts else None
+
+            # a repair that failed again within ~24h of the previous close
+            failed_within_h = None
+            for a, b in zip(dated, dated[1:]):
+                close_a = _date(a.get("close_date")) or _date(a.get("open_date"))
+                open_b = _date(b.get("open_date"))
+                if close_a and open_b:
+                    gap_h = (open_b - close_a).total_seconds() / 3600.0
+                    if 0 <= gap_h <= 48 and (failed_within_h is None or gap_h < failed_within_h):
+                        failed_within_h = round(gap_h, 1)
+
+            actions = " ".join((w.get("action", "") or "").lower() for w in wos)
+            symptom_only = (any(k in actions for k in ("flush", "clean", "reset", "adjust"))
+                            and len(wos) >= 3)
+
+            rec = (f"'{cause}' recurred {len(wos)}x on {funcloc} "
+                   f"(up to {window_max}x within {window_days} days). ")
+            if repeated_part:
+                rec += f"Part {repeated_part} replaced repeatedly. "
+            if symptom_only:
+                rec += ("Repeated identical repair has not resolved the root "
+                        "cause — inspect upstream wear before the next restart. ")
+            if failed_within_h is not None:
+                rec += f"A prior repair failed again within {failed_within_h}h. "
+
+            out.append({"cause": cause, "occurrences": len(wos),
+                        "window_days": window_days, "window_max": window_max,
+                        "repeated_part": repeated_part,
+                        "repair_failed_within_h": failed_within_h,
+                        "symptom_only_fix": symptom_only,
+                        "recommendation": rec.strip()})
+        out.sort(key=lambda p: -p["occurrences"])
+        return out
 
 
 # --------------------------------------------------------------------------- #
@@ -261,7 +333,7 @@ class ManualAdapter:
 class PartsAdapter:
     def __init__(self, dr: DataRoot) -> None:
         self.dr = dr
-        with open(dr.path("parts", "inventory.csv")) as f:
+        with open(dr.path("parts", "inventory.csv"), encoding="utf-8") as f:
             self.rows = {r["part_no"]: r for r in csv.DictReader(f)}
 
     def lookup(self, part_no: str) -> Optional[dict]:
@@ -279,7 +351,7 @@ class MOCAdapter:
     def recent_changes(self, funcloc: str) -> list[dict]:
         out = []
         for fp in glob.glob(self.dr.path("moc", "*.json")):
-            r = json.load(open(fp))
+            r = json.load(open(fp, encoding="utf-8"))
             if r.get("funcloc") == funcloc:
                 out.append(r)
         return sorted(out, key=lambda r: r.get("date", ""), reverse=True)
@@ -297,7 +369,7 @@ class SafetyAdapter:
                 continue
             fp = self.dr.path("safety", cand)
             if os.path.exists(fp):
-                txt = open(fp).read()
+                txt = open(fp, encoding="utf-8").read()
                 return {"procedure": cand, "text": txt,
                         "requires_permit": "permit" in txt.lower(),
                         "citation": f"SAFETY:{cand}"}
@@ -313,11 +385,11 @@ class ShiftNotesAdapter:
     def search(self, terms: list[str], limit: int = 5) -> list[dict]:
         hits = []
         for fp in sorted(glob.glob(self.dr.path("shift_notes", "*.md")), reverse=True):
-            txt = open(fp).read().lower()
+            txt = open(fp, encoding="utf-8").read().lower()
             score = sum(1 for t in terms if t.lower() in txt)
             if score:
                 hits.append({"file": os.path.basename(fp), "score": score,
-                             "text": open(fp).read().strip(),
+                             "text": open(fp, encoding="utf-8").read().strip(),
                              "citation": f"SHIFT_NOTES:{os.path.basename(fp)}"})
         return sorted(hits, key=lambda h: -h["score"])[:limit]
 
@@ -333,7 +405,7 @@ class SecurityScanner:
     def scan_configs(self) -> list[dict]:
         findings = []
         for fp in glob.glob(self.dr.path("config", "*.ini")):
-            for i, line in enumerate(open(fp), 1):
+            for i, line in enumerate(open(fp, encoding="utf-8"), 1):
                 m = self.SECRET_RX.search(line)
                 if m and "${" not in line:
                     findings.append({"file": os.path.basename(fp), "line": i,

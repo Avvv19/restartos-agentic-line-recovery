@@ -35,8 +35,31 @@ padding:2px 9px;border:1px solid;margin-right:5px}
 .drop{border:2px dashed var(--line);border-radius:10px;padding:20px;text-align:center;color:var(--muted);font-size:13px;margin-bottom:14px;cursor:pointer}
 .refute{color:var(--vf);font-size:12.4px;margin:2px 0}
 code{background:#F1F5F9;border-radius:4px;padding:1px 5px;font-size:11.5px}
+.intake{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin-bottom:14px}
+.intake textarea{width:100%;border:1px solid var(--line);border-radius:8px;padding:10px;font-size:13px;
+font-family:inherit;resize:vertical;min-height:62px}
+.intake .row{display:flex;gap:8px;align-items:center;margin-top:8px;flex-wrap:wrap}
+.chips .pill{background:#F7F9FC}
+.board{border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.board .erow{display:grid;grid-template-columns:96px 1fr 92px;gap:8px;padding:8px 10px;border-top:1px solid var(--line);font-size:12.3px;align-items:start}
+.board .erow:first-child{border-top:none}
+.board .src{font-weight:700;font-size:10.5px;letter-spacing:.04em}
+.stance-sup{color:var(--it)}.stance-con{color:var(--gt)}.stance-ctx{color:var(--muted)}
+.contract{background:#0B0E14;color:#E6EAF2;border-radius:10px;padding:14px 16px;font-size:12.6px}
+.contract .row{margin:4px 0}.contract .allow{color:#86EFAC}.contract .forbid{color:#FCA5A5}
+.esc{background:#FFF7ED;border:1px solid #FED7AA;border-radius:10px;padding:14px 16px;font-size:12.8px}
+.esc .step{font-weight:700;color:var(--vf);margin-top:6px}
 </style></head>
 <body><div class="wrap">
+<div class="intake">
+  <div class="sect" style="margin-top:0">Operator intake · write it the way the floor reports it</div>
+  <textarea id="msg" placeholder="e.g. Line 3 filler keeps stopping after 20 min, bottles backing up at the capper, A-220, need a restart before 3 PM"></textarea>
+  <div class="chips" id="parsed" style="margin-top:8px"></div>
+  <div class="row">
+    <span class="btn pri" id="runBtn">Parse &amp; run recovery</span>
+    <span class="muted" id="runState"></span>
+  </div>
+</div>
 <div class="drop" id="drop">Drop a <code>run_*.json</code> artifact here, or click to load
 (<code>_it_state/latest_run.json</code>). The cockpit auto-tries to load the latest run.</div>
 <input type="file" id="file" accept="application/json" style="display:none">
@@ -89,10 +112,65 @@ function render(r){
     h+=`</div><div class="muted" style="font-size:11.5px;margin-top:4px">total weight ${ev.total_weight} · contradictions ${ev.n_contradictions}</div>`;
   }
 
-  if(dec==='ABSTAIN'){
-    h+='<div class="sect">Decision · ABSTAIN → escalate</div>';
-    h+=`<div class="wo"><span class="risk">ESCALATED</span> ${esc(r.escalation.reason)}<br>
-        to: ${esc(r.escalation.to)}</div>`;
+  // --- First-fault isolation (causal chain) ---------------------- //
+  if(r.causal_chain){
+    const c=r.causal_chain;
+    h+='<div class="sect">First-fault isolation · the actionable fault, not the loudest alarm</div>';
+    h+=`<div class="wo"><b class="ok">First actionable fault:</b> ${esc(c.first_actionable_fault)}`;
+    if((c.links||[]).length){
+      h+='<div class="mono" style="font-size:11.6px;margin-top:6px">'+
+         [c.first_actionable_fault].concat((c.links||[]).map(l=>l.effect)).map(esc).join(' → ')+'</div>';
+    }
+    if((c.downstream_symptoms||[]).length)
+      h+=`<div class="muted" style="margin-top:4px">Downstream (ignore as first action): ${esc((c.downstream_symptoms||[]).join('; '))}</div>`;
+    h+='</div>';
+  }
+
+  // --- Evidence Board -------------------------------------------- //
+  const items=(r.evidence_items||[]).filter(e=>e.source_system!=='INCIDENT_MEMORY');
+  if(items.length){
+    h+='<div class="sect">Evidence board · what the agent checked, found, and how fresh</div>';
+    h+='<div class="board">';
+    items.slice(0,14).forEach(e=>{
+      const t=e.tags||{};
+      let stance='ctx',label='context';
+      if(t.conflict){stance='con';label='contradicts'}
+      else if(t.asserts_cause){stance='sup';label='supports'}
+      const fresh=e.freshness_s? (e.freshness_s>86400?Math.round(e.freshness_s/86400)+'d':Math.round(e.freshness_s/3600)+'h'):'live';
+      h+=`<div class="erow"><div class="src">${esc(e.source_system)}</div>`+
+         `<div>${esc((e.claim||'').slice(0,200))}<div class="stance-${stance}" style="font-size:11px;margin-top:2px">${label} · trust ${e.trust}</div></div>`+
+         `<div class="muted" style="font-size:11px;text-align:right">w ${e.confidence}<br>${fresh}</div></div>`;
+    });
+    h+='</div>';
+  }
+
+  if(dec==='ABSTAIN'||dec==='NEED_MORE_INFO'){
+    const isNMI=dec==='NEED_MORE_INFO';
+    // original ABSTAIN display, preserved unchanged
+    if(dec==='ABSTAIN'){
+      h+='<div class="sect">Decision · ABSTAIN → escalate</div>';
+      h+=`<div class="wo"><span class="risk">ESCALATED</span> ${esc(r.escalation.reason)}<br>
+          to: ${esc(r.escalation.to)}</div>`;
+    }else{
+      h+='<div class="sect">Decision · NEED MORE INFO</div>';
+    }
+    const ep=r.escalation_packet, mi=r.missing_info;
+    if(mi){
+      h+=`<div class="esc"><b>Need:</b> ${esc(mi.item)}<br><span class="muted">${esc(mi.why)}</span>`+
+         `<div class="step">→ ${esc(mi.how_to_provide)}</div></div>`;
+    }
+    if(ep){
+      h+='<div class="sect">Escalation packet · a blocked run that is still useful</div>';
+      h+='<div class="esc">';
+      h+=`<div class="kv"><b>Reported:</b> ${esc(ep.operator_reported)}</div>`;
+      h+=`<div class="kv"><b>Checked:</b> ${esc((ep.evidence_checked||[]).join(', '))}</div>`;
+      h+=`<div class="kv"><b>Missing:</b> ${esc((ep.evidence_missing||[]).join(', ')||'—')}</div>`;
+      h+=`<div class="kv"><b>Blocked by:</b> ${esc(ep.blocking_reason||(mi?('need '+mi.item):'see above'))}</div>`;
+      h+=`<div class="kv"><b>Likely cause:</b> ${esc(ep.likely_cause||'undetermined')} (conf ${ep.confidence})</div>`;
+      h+=`<div class="kv"><b>Route to:</b> ${esc(ep.route_to)}</div>`;
+      h+=`<div class="step">Next human step → ${esc(ep.next_human_step)}</div>`;
+      h+='</div>';
+    }
   }else{
     // diagnosis
     h+=`<div class="sect">Diagnosis · confidence ${wp.confidence}</div>`;
@@ -130,6 +208,48 @@ function render(r){
        '<span class="btn pri">Approve &amp; create WO</span></div>';
     h+='<div class="muted" style="margin-top:8px">Buttons are the human go/no-go surface. '+
        'This run was decided by: '+esc(g.outcome)+'.</div>';
+    // maintenance patterns (institutional memory)
+    const pats=wp.maintenance_patterns||[];
+    if(pats.length){
+      h+='<div class="sect">Maintenance patterns · mined from CMMS history</div>';
+      pats.slice(0,3).forEach(p=>{
+        h+=`<div class="wo" style="font-size:12.4px">↻ <b>${esc(p.cause||'')}</b> ×${p.occurrences} `+
+           `<span class="muted">(${p.window_days}d window)</span><br>${esc(p.recommendation)}</div>`;
+      });
+    }
+    // tribal knowledge captured (unverified)
+    const kc=wp.knowledge_candidates||[];
+    if(kc.length){
+      h+='<div class="sect">Tribal knowledge captured · unverified, needs lead sign-off</div>';
+      kc.slice(0,3).forEach(k=>{
+        h+=`<div class="wo" style="font-size:12.4px"><span class="pill p-fail">${esc(k.status)}</span> `+
+           `${esc(k.statement)}<div class="muted" style="margin-top:3px">confirm with ${esc(k.confirms_with)}</div></div>`;
+      });
+    }
+    // shift handoff (structured)
+    const sh=wp.shift_handoff||{};
+    if(sh.monitor_next_shift){
+      h+='<div class="sect">Shift handoff · what the next shift needs</div>';
+      h+=`<div class="wo" style="font-size:12.4px"><b>Monitor:</b> ${esc(sh.monitor_next_shift)}<br>`+
+         `<b>Parts reserved (not installed):</b> ${esc((sh.parts_reserved_not_installed||[]).join(', ')||'—')}<br>`+
+         `<b>Safety:</b> ${esc(sh.safety_loto||'')}`+
+         ((sh.unresolved_risks||[]).length?`<br><b>Unresolved:</b> ${esc((sh.unresolved_risks||[]).join('; '))}`:'')+'</div>';
+    }
+  }
+
+  // --- Decision Contract (every run) ----------------------------- //
+  const dcn=r.decision_contract;
+  if(dcn){
+    h+='<div class="sect">Decision contract · what it may do, what it is blocked from doing</div>';
+    h+='<div class="contract">';
+    h+=`<div class="row"><b>Decision:</b> ${esc(dcn.decision)} · conf ${dcn.confidence}</div>`;
+    h+=`<div class="row allow">✓ Allowed next action: ${esc(dcn.allowed_next_action)}</div>`;
+    h+=`<div class="row allow">✓ Approved IT actions: ${esc((dcn.approved_it_actions||[]).join(' · '))}</div>`;
+    h+=`<div class="row forbid">✗ Forbidden (enforced in code): ${esc((dcn.forbidden_actions||[]).join(' · '))}</div>`;
+    if((dcn.missing_evidence||[]).length)
+      h+=`<div class="row">• Missing evidence: ${esc((dcn.missing_evidence||[]).join(', '))}</div>`;
+    h+=`<div class="row"><span class="muted">human approval required: ${dcn.human_approval_required} · risk ${esc(dcn.risk_class)} · audit ${esc((dcn.audit_id||'').slice(0,12))}</span></div>`;
+    h+='</div>';
   }
   // --- IT writes (actual outcomes produced by the agent) ---- //
   if((r.it_actions||[]).length){
@@ -155,6 +275,29 @@ function render(r){
   $('root').innerHTML=h;
 }
 function load(txt){try{render(JSON.parse(txt))}catch(e){$('root').innerHTML='<div class="bad">Invalid run JSON: '+esc(e.message)+'</div>'}}
+
+// --- freeform operator intake ---------------------------------- //
+function renderParsed(p){
+  if(!p){$('parsed').innerHTML='';return}
+  const f=(k,v)=>v?`<span class="pill">${k}: ${esc(v)}</span>`:'';
+  let s=f('line',p.line)+f('machine',p.machine)+f('symptom',p.symptom)+f('alarm',p.alarm_code)+
+        f('urgency',p.urgency)+f('product',p.product)+f('deadline',p.deadline)+f('safety',p.safety_concern);
+  if((p.missing_details||[]).length) s+=`<span class="pill p-fail">missing: ${esc(p.missing_details.join(', '))}</span>`;
+  $('parsed').innerHTML=s||'<span class="muted">type a report to see the structured parse…</span>';
+}
+let pt;
+$('msg').addEventListener('input',()=>{clearTimeout(pt);pt=setTimeout(()=>{
+  const m=$('msg').value.trim(); if(!m){renderParsed(null);return}
+  fetch('/api/intake',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:m})})
+    .then(r=>r.json()).then(renderParsed).catch(()=>{});
+},250)});
+$('runBtn').onclick=()=>{
+  const m=$('msg').value.trim(); if(!m){$('runState').textContent='enter a report first';return}
+  $('runState').textContent='running recovery…';
+  fetch('/api/run',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:m,auto_approve:true})})
+    .then(r=>r.json()).then(res=>{$('runState').textContent='done · '+res.decision;render(res)})
+    .catch(e=>{$('runState').textContent='error: '+e});
+};
 $('drop').onclick=()=>$('file').click();
 $('file').onchange=e=>{const f=e.target.files[0];if(f){const r=new FileReader();r.onload=()=>load(r.result);r.readAsText(f)}};
 ['dragover','drop'].forEach(ev=>$('drop').addEventListener(ev,e=>{e.preventDefault();

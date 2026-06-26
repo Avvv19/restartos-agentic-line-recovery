@@ -46,7 +46,8 @@ FILES: list[str] = []
 def _w(relpath: str, content: str, mode: str = "w") -> None:
     p = os.path.join(OUT, relpath)
     os.makedirs(os.path.dirname(p), exist_ok=True)
-    with open(p, mode, newline="" if relpath.endswith(".csv") else None) as f:
+    with open(p, mode, encoding="utf-8",
+              newline="" if relpath.endswith(".csv") else None) as f:
         f.write(content)
     FILES.append(relpath)
 
@@ -196,7 +197,12 @@ def gen_cmms(n: int = 220):
               "PLC fault", "Lubrication", "Belt tension", "Calibration drift"]
     header = ["wo_id", "funcloc", "open_date", "close_date", "cause", "action",
               "labor_hrs", "parts_used", "tech", "recurring_flag"]
-    rows = [",".join(header)]
+    # Build with csv.writer so fields containing commas (e.g. the action text)
+    # are properly quoted — otherwise downstream columns shift.
+    import io as _io
+    sio = _io.StringIO()
+    w = csv.writer(sio)
+    w.writerow(header)
     fill_clog_count = 0
     for i in range(n):
         wo = f"WO-{44000 + i}"
@@ -214,16 +220,17 @@ def gen_cmms(n: int = 220):
         parts = {"Nozzle clog": "8200-NZ", "Seal leak": "8200-SL",
                  "Bearing wear": "6204-2RS"}.get(cause, "")
         rec = "Y" if (fl == "FL-PKG-03-FILL" and cause == "Nozzle clog") else "N"
-        rows.append(",".join([wo, fl, od.date().isoformat(), cd.date().isoformat(),
-                              cause, action, str(random.randint(1, 6)), parts,
-                              random.choice(["jmartin", "kpatel", "rsingh", "lchen"]),
-                              rec]))
+        w.writerow([wo, fl, od.date().isoformat(), cd.date().isoformat(),
+                    cause, action, str(random.randint(1, 6)), parts,
+                    random.choice(["jmartin", "kpatel", "rsingh", "lchen"]), rec])
     # DEFECT: a duplicate WO with a CONTRADICTORY cause (data conflict to surface)
-    rows.append("WO-44999,FL-PKG-03-FILL,2026-05-30,2026-05-30,Operator error,No fault found,1,,jmartin,N")
-    rows.append("WO-44999,FL-PKG-03-FILL,2026-05-30,2026-05-30,Nozzle clog,Replaced 8200-NZ,2,8200-NZ,kpatel,Y")
+    w.writerow(["WO-44999", "FL-PKG-03-FILL", "2026-05-30", "2026-05-30",
+                "Operator error", "No fault found", "1", "", "jmartin", "N"])
+    w.writerow(["WO-44999", "FL-PKG-03-FILL", "2026-05-30", "2026-05-30",
+                "Nozzle clog", "Replaced 8200-NZ", "2", "8200-NZ", "kpatel", "Y"])
     defect("cmms/work_orders.csv", "duplicate_contradiction",
            "WO-44999 appears twice with contradictory cause (Operator error vs Nozzle clog)")
-    _w("cmms/work_orders.csv", "\n".join(rows) + "\n")
+    _w("cmms/work_orders.csv", sio.getvalue())
     # a few detailed WO JSONs (different format)
     for i in range(8):
         wo = {"wo_id": f"WO-{44000+i}", "funcloc": "FL-PKG-03-FILL",
