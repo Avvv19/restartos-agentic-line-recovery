@@ -104,6 +104,76 @@ Reproduce with `python -m restartos.cli demo` and `python -m restartos.cli bound
 | Repeat fault on same asset | confidence improves (with Postgres memory) | ✅ PASS |
 | Contradictory evidence | escalate | ✅ PASS |
 
+### 🔬 What the demo proves, in one line each
+
+- **Scene 1 → ACT.** It takes a messy goal and produces an approvable recovery package.
+- **Scene 2 → NEED_MORE_INFO.** It asks for the one missing input instead of guessing.
+- **Scene 3 → ABSTAIN.** It refuses safely and hands over a useful escalation packet.
+- **Scene 4 → self-correction.** A second model catches a hallucinated citation and forces a re-plan.
+- **Scene 5 → OT writes are impossible.** It tries to command the line and is blocked by construction.
+
+📖 Full walkthrough for reviewers: **[docs/DEMO_GUIDE.md](docs/DEMO_GUIDE.md)**
+
+---
+
+## 🤖 Why this is an agent — not a chatbot, not a dashboard
+
+This distinction is the whole point.
+
+- A **chatbot** answers questions with text. Restart OS doesn't chat — it takes a *goal* and produces a real, structured outcome (a work order written to the CMMS, parts reserved, a tech paged).
+- A **dashboard** shows you data and leaves the thinking to you. Restart OS does the thinking:
+
+| A dashboard… | Restart OS… |
+|---|---|
+| shows "head pressure is high" | says "the nozzle is clogged — here's the cited procedure, the part, the tech, the work order. Approve?" |
+| shows ten alarms at once | tells you **which one started it** (first-fault isolation) |
+| never refuses | **abstains** when it can't ground a safe answer |
+| never asks | requests the **one** missing input it needs |
+| never acts | **writes the work order** — after a human says yes |
+
+It takes a goal → decides what evidence to gather → calls tools → verifies the plan → asks for missing info when needed → refuses unsafe actions → produces approved operational outputs. That's an agent. 📖 [docs/PROBLEM_ALIGNMENT.md](docs/PROBLEM_ALIGNMENT.md)
+
+---
+
+## 📦 The final output — a Recovery Work Package (not JSON)
+
+When the agent finishes, it doesn't hand you a blob of data. It hands you the **exact stack of paperwork and decisions a senior tech assembles by hand** — ready for one human to approve:
+
+🎯 Root cause summary · ⏱️ First-fault timeline · 🔎 Evidence board · ✅ Restart checklist · 📝 Work order draft · 🔧 Parts reservation · 👷 Technician assignment · 🧪 QC sampling plan · 🔁 Shift handoff · 🧾 Maintenance patterns · 💡 Tribal-knowledge notes · 💰 Economics · 📜 Decision contract · 🚨 Escalation packet *(if blocked)*
+
+📖 Every artifact explained in plain English: **[docs/RECOVERY_WORK_PACKAGE.md](docs/RECOVERY_WORK_PACKAGE.md)**
+
+---
+
+## 🟢 What's real vs. mocked (the honest answer)
+
+A fair question from any judge: *"Is this real or a fake demo?"* The **intelligence and governance are real**; the **plant connectors are simulated** with faithful API shapes and documented swap points.
+
+| Layer | Demo mode | Production path |
+|---|---|---|
+| Historian | CSV / mock | PI Web API / OPC-UA |
+| CMMS | JSON / mock | Maximo / Fiix |
+| ERP (parts) | JSON / mock | SAP / Oracle |
+| QMS | JSON / mock | ETQ / MasterControl |
+| HR roster | CSV / mock | Workday / BambooHR |
+| Notifications | local receipt | Slack / Teams |
+| Manuals | local corpus + Qdrant | SharePoint / Drive / document vault |
+| **Agent loop · evidence graph · cross-model verifier · OT/IT safety boundary · authorization gate · audit · RAG** | **🟢 Real** | **🟢 Real** |
+
+---
+
+## 📚 Documentation
+
+| Doc | What it covers |
+|---|---|
+| **[ARCHITECTURE.md](ARCHITECTURE.md)** | The full system — end-to-end flow, decision model, safety, demo, work-package schema, handoff |
+| **[docs/DEMO_GUIDE.md](docs/DEMO_GUIDE.md)** | How to run and read the five scenes (for non-technical reviewers too) |
+| **[docs/RECOVERY_WORK_PACKAGE.md](docs/RECOVERY_WORK_PACKAGE.md)** | The final output, every artifact in plain English |
+| **[docs/SAFETY_MODEL.md](docs/SAFETY_MODEL.md)** | Why the agent cannot touch your line |
+| **[docs/PROBLEM_ALIGNMENT.md](docs/PROBLEM_ALIGNMENT.md)** | Pains removed + the agent requirements, mapped to code |
+| **[docs/END_TO_END.md](docs/END_TO_END.md)** | A complete annotated run, screenshot by screenshot |
+| **[docs/CALIBRATION.md](docs/CALIBRATION.md)** | The 3–4 week shadow-mode pilot |
+
 ---
 
 ## 🟡 The 3-4 Week Calibration Window
