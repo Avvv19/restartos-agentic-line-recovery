@@ -8,7 +8,7 @@
 [![License](https://img.shields.io/badge/License-MIT-6366f1?style=for-the-badge)](LICENSE)
 [![Agent Orchestration](https://img.shields.io/badge/Agent_Orchestration-Manufacturing-a855f7?style=for-the-badge)](#)
 [![Docker](https://img.shields.io/badge/docker_compose-up-22d3ee?style=for-the-badge&logo=docker&logoColor=white)](docker-compose.yml)
-[![Status](https://img.shields.io/badge/Status-Code--production_ready-fbbf24?style=for-the-badge)](#status--where-this-actually-stands)
+[![Status](https://img.shields.io/badge/Status-Simulated--prototype-fbbf24?style=for-the-badge)](#status--where-this-actually-stands)
 
 ### **An AI agent that does the maintenance tech's paperwork while a line is down — so the tech can run.**
 
@@ -24,12 +24,14 @@
 
 ## 🎯 The problem, in one paragraph
 
-A production line goes down. A senior maintenance technician spends 45 to 90 minutes — while the line bleeds $5,000 to $50,000 per hour — doing **paperwork**, not repair. They open the historian, check the alarm signature. They open the CMMS, look up the last 15 work orders on this asset. They open a 400-page PDF, find Section 7.4 page 143. They walk to the parts cage and check stock. They check the shift roster for a certified technician. They look at yesterday's handover notes for tribal context. They fill out a 30-field work order. They reserve parts. They draft a shift handover.
+Restart OS is a simulated personal prototype. The timings, cost figures and recovery outcomes below are scenario assumptions used to exercise the workflow; they are not measured plant results, customer outcomes or evidence of a production deployment.
 
-**Restart OS does that 45-90 minutes of paperwork in about 30 seconds.** The technician gets a clean, cited, safety-checked proposal on a single screen and a button labeled *Approve*. They press it. They go fix the machine.
+The illustrative scenario assumes a production line is down and a senior maintenance technician spends 45 to 90 minutes on paperwork. The $5,000–$50,000 per-hour loss range is a scenario assumption, not a measured result. The workflow shows how a prototype could gather the historian, CMMS, manual, parts and roster evidence for review.
+
+**In the simulated scenario, Restart OS is designed to reduce the time needed to gather evidence and prepare a recovery package.** A technician can review a cited proposal and approve or reject it. The repository does not establish real-plant time savings, financial impact or production deployment.
 
 > [!IMPORTANT]
-> It is a fully autonomous agent: it takes a goal, calls 10 tools across the plant's silos, makes decisions, and produces a real outcome — a work order written into the CMMS, parts reserved in the ERP, a technician paged, a QC plan filed. Then the human says yes or no.
+> It is an agentic prototype that gathers evidence and proposes IT-side actions subject to explicit human authorization. Plant connectors are mocked or simulated in the demo; no autonomous operational action is established.
 
 ---
 
@@ -41,7 +43,7 @@ A production line goes down. A senior maintenance technician spends 45 to 90 min
 | "Our AI is safe" | **OT/IT boundary enforced in code.** `make boundary` proves OT writes raise `OTWriteForbidden` exception. Not policy. Code. |
 | "Our AI learns over time" | **Postgres incident memory.** Same fault on same asset, second time: confidence climbs 0.55 → 0.87 because priors are recalled. |
 | "Our AI uses multiple models" | **NVIDIA NIM + Groq Llama in different families.** Anti-collusion: one author, one independent verifier. Cross-checked at every step. |
-| "Our AI knows when to defer to humans" | **52% abstention rate**, published in `/metrics`. The system actually refuses half its inputs when it can't ground them. That number is the rarest virtue in this market. |
+| "Our AI knows when to defer to humans" | A fixture/demo run records abstentions in `/metrics`; the rate is not a production KPI or customer benchmark. |
 | Demo runs once on a sample PDF | **`docker compose up -d`** brings up the whole stack: Qdrant + Postgres + the engine. CI gates every commit. |
 
 ---
@@ -120,7 +122,7 @@ Reproduce with `python -m restartos.cli demo` and `python -m restartos.cli bound
 
 This distinction is the whole point.
 
-- A **chatbot** answers questions with text. Restart OS doesn't chat — it takes a *goal* and produces a real, structured outcome (a work order written to the CMMS, parts reserved, a tech paged).
+- A **chatbot** answers questions with text. Restart OS takes a *goal* and produces a structured, reviewable proposal. Connector writes shown in the demo are simulated unless separately configured and verified.
 - A **dashboard** shows you data and leaves the thinking to you. Restart OS does the thinking:
 
 | A dashboard… | Restart OS… |
@@ -207,7 +209,7 @@ You don't need to read the code to know what this does. Here's the picture:
 │   1.  PLC alarm fires on Line 3 filler.                            │
 │         "A-220 — high head pressure, low flow"                     │
 │                                                                    │
-│              ↓ (Restart OS opens the case, ~30 seconds total)      │
+│              ↓ (the local demo assembles a case; timing is illustrative) │
 │                                                                    │
 │   2.  Agent reads the historian (4 sensors, 8 hours of history).   │
 │   3.  Agent reads the last 30 days of work orders on this asset.   │
@@ -242,8 +244,8 @@ You don't need to read the code to know what this does. Here's the picture:
 │       Press it → work order in CMMS, parts reserved in ERP,        │
 │                  Slack page to jmartin, QC plan filed.             │
 │                                                                    │
-│   13. Line goes back up 30-45 minutes faster than before.          │
-│       $5,000-$25,000 per incident, on average.                     │
+│   13. A human reviews the proposed recovery package.               │
+│       No plant-time or financial outcome is established here.      │
 │                                                                    │
 └────────────────────────────────────────────────────────────────────┘
 ```
@@ -252,14 +254,13 @@ You don't need to read the code to know what this does. Here's the picture:
 
 - ❌ It does not control the line. There is no path to write to the PLC, SCADA, or any OT system. *Enforced in code.*
 - ❌ It does not act without a human. Every work order, every parts pull, every page goes through your authorization gate.
-- ❌ It does not pretend to know things it doesn't. When it can't ground a plan, it abstains and says so. Out of every 21 test incidents we've run, it has refused to act on 11 of them — that's the system being honest, not broken.
+- ❌ It does not pretend to know things it doesn't. When it can't ground a plan, it abstains and says so. Fixture abstention counts are illustrative and are not a production benchmark.
 
 **What it costs:**
 
-- LLM inference: about **$0.00 per incident** using free-tier NVIDIA NIM + Groq endpoints (as of the date of this README). At commercial Anthropic/OpenAI rates it would be roughly $0.02-$0.10 per incident.
-- Infrastructure: one VM (~$50/month) running Docker.
-- Integration time: 1 to 2 weeks of engineering to wire to your specific PI Historian, CMMS, HRIS.
-- Calibration time: **3 to 4 weeks of shadow mode**, then the green light.
+- LLM inference and infrastructure costs depend on the providers, quotas and deployment you configure; figures are illustrative estimates, not a quote or measured operating cost.
+- Integration effort depends on the plant's APIs, security review and validation requirements; no one-to-two-week production timeline is promised.
+- A supervised shadow-mode period is recommended before any operational use; it does not by itself authorize deployment.
 
 ---
 
@@ -282,7 +283,7 @@ docker exec restartos-engine python -m restartos.cli run --auto-approve
 open http://localhost:8000
 ```
 
-That's it. Five minutes from `git clone` to a working agent triaging a fault.
+This starts the local demo stack when dependencies and Docker are available; setup time and behavior vary by environment. It is not evidence of a production-ready agent.
 
 ---
 
@@ -321,7 +322,7 @@ restartos_memory_incidents                      11
 restartos_last_top_confidence                   0.8700
 ```
 
-The **52% abstention rate is the most important line in this whole README.** It is the property no other industrial-AI pitch in this space publishes, because publishing it means committing to the honest-uncertainty contract.
+The demo exposes abstention counters through `/metrics`. Any rate shown by a local fixture run is illustrative, not a customer or industrial benchmark.
 
 ### The liveness probe — `http://localhost:8000/healthz`
 
@@ -509,7 +510,7 @@ PYTHONPATH=. python -m restartos.cli boundary-test  # proves OT writes blocked
 | `_data/hr/shift_roster.csv` | BambooHR or Workday | already implemented in `connectors.py:BambooHRIS` — set `HRIS_BACKEND=bamboo` + `BAMBOO_*` | 2-3 days |
 | Notification → JSON | Slack incoming webhook | already implemented in `connectors.py:SlackNotifier` — set `SLACK_WEBHOOK_URL` | 1 day |
 
-**There is no remaining architecture work.** Going from this MVP to your plant is `.env` configuration plus the **3-4 week calibration window**.
+Moving from this MVP to a real plant requires integration, security review, validation and a supervised calibration period; it is not established by `.env` configuration alone.
 
 ---
 
@@ -527,7 +528,7 @@ PYTHONPATH=. python -m restartos.cli boundary-test  # proves OT writes blocked
 | Real Historian / CMMS / HRIS / Slack connectors | 🟢 **Implemented + tested** | Mocked-HTTP tests for all 4 — `tests/test_live_connectors.py` |
 | Shadow-mode harness | 🟢 **Real** | `restartos/shadow_mode.py` + 8-label fixture |
 | CI on every commit | 🟢 **Green** | pytest + ruff + docker build |
-| **A real plant pilot** | 🟡 **Not started — needs a partner plant** | This is the only remaining work; it is calendar time, not engineering. |
+| **A real plant pilot** | 🟡 **Not started — needs a partner plant** | No production or customer outcome is established. |
 
 ---
 
