@@ -1,8 +1,8 @@
 # Restart OS — End-to-End Walkthrough
 
-A complete trace of one real incident from the **PLC alarm** firing through to **the work order being created in the CMMS**, with screenshots of the live system at each stage.
+A complete trace of one synthetic incident from the simulated **PLC alarm** through to a simulated work-order write, with screenshots of the local prototype at each stage.
 
-This walkthrough uses the run `INC-ad9f9fa7` — a live execution against NVIDIA NIM + Groq + Qdrant + Postgres, not a mock.
+This walkthrough records one development execution using configured model providers plus local Qdrant and Postgres services. It is not evidence of a plant deployment or connection to a real CMMS.
 
 ---
 
@@ -266,7 +266,7 @@ This is the most important section for an honest assessment.
 | Agent orchestration loop | 🟢 **Real** | LangGraph-compatible state machine with abstention, retries, cross-model verify |
 | LLM author (DEEP_DIAGNOSIS, PLANNING) | 🟢 **Real** | NVIDIA NIM Nemotron-3-Ultra-550B (free tier) |
 | LLM verifier (VERIFICATION) | 🟢 **Real** | Groq Llama-3.3-70B (free tier, **different family** for anti-collusion) |
-| Vector RAG | 🟢 **Real** | Qdrant 1.12 + `all-MiniLM-L6-v2` (112 chunks @ 384 dims, persisted across restarts) |
+| Vector RAG | Implemented prototype | Qdrant plus `all-MiniLM-L6-v2`; current corpus counts should be measured from a reproducible run |
 | Incident memory | 🟢 **Real** | Postgres 16 — `recall_similar()` + `persist_run()` |
 | Audit log | 🟢 **Real** | Hash-chained, tamper-evident, per-incident JSON |
 | OT/IT boundary | 🟢 **Enforced** | `make boundary` proves OT writes raise `OTWriteForbidden` |
@@ -303,7 +303,7 @@ That is exactly the failure mode visible in the regression matrix runs: 3 scenar
 
 ### 6.3 It can say "I don't know" — or "I need one more thing"
 
-The decision is three-way. `Decision.ABSTAIN` is a first-class outcome, not an exception — the system has actually abstained 11 times out of 21 runs (52% abstention rate, visible in `/metrics`). `Decision.NEED_MORE_INFO` is the middle path: when one specific human-supplied input would unblock the call (a missing alarm code, an unverified alarm not in the OEM fault map, an absent line number), the agent asks for exactly that instead of guessing or refusing outright. Either way a blocked run still produces an **Escalation Packet** with the exact next human step, and every run produces a **Decision Contract**. That is honest uncertainty — the property without which no industrial AI can be trusted to write a work order.
+The decision is three-way. `Decision.ABSTAIN` is a first-class outcome, not an exception. `Decision.NEED_MORE_INFO` is the middle path: when one specific human-supplied input would unblock the call (a missing alarm code, an unverified alarm not in the OEM fault map, or an absent line number), the agent asks for that input instead of guessing or refusing outright. The metrics endpoint calculates decision counts and abstention rate from available state, but this document does not designate a captured result as a reproducible benchmark. A blocked run still produces an **Escalation Packet**, and every run produces a **Decision Contract**.
 
 ---
 
