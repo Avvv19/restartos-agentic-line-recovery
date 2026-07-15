@@ -1,6 +1,10 @@
 # RestartOS
 
+![RestartOS banner](docs/assets/banner.svg)
+
 RestartOS is a personal simulated prototype for exploring evidence-driven agent workflows in a synthetic manufacturing line-recovery scenario. It reads generated plant data, gathers supporting context, drafts recovery artifacts, verifies constraints, and routes consequential actions to a human approval gate. It does not control machinery and has not been deployed in a plant.
+
+[Architecture](ARCHITECTURE.md) · [End-to-end walkthrough](docs/END_TO_END.md) · [Demo guide](docs/DEMO_GUIDE.md) · [Safety model](docs/SAFETY_MODEL.md)
 
 ## What the prototype demonstrates
 
@@ -13,21 +17,29 @@ RestartOS is a personal simulated prototype for exploring evidence-driven agent 
 - Append-oriented audit events and operational metrics
 - Tests for pipeline behavior and mocked connector contracts
 
+![RestartOS demo cockpit](docs/screenshots/demo-cockpit.png)
+
 ## Simulation boundary
 
 All included industrial data is synthetic. Connector tests use mocked HTTP behavior and do not prove compatibility with a real historian, CMMS, HRIS, Slack workspace, or plant network. Configuration switches describe integration seams; they are not evidence of a live deployment.
 
 The metrics endpoint calculates run counts, decision distributions, abstention rate, token usage, retrieval counts, and related diagnostics from available state. This README intentionally does not publish captured figures because no versioned reproducible run artifact is designated as canonical.
 
-## Setup
+## Quick start
+
+Prerequisites: Python 3.10 or newer and Git. The supported default path is local and simulated; external model, database, and plant-system credentials are not required.
 
 ```bash
+git clone https://github.com/Avvv19/restartos-agentic-line-recovery.git
+cd restartos-agentic-line-recovery
 python -m venv .venv
 # Windows: .venv\Scripts\activate
 # macOS/Linux: source .venv/bin/activate
 pip install -r requirements.txt
 copy .env.example .env  # Windows
 # cp .env.example .env  # macOS/Linux
+python dataset/generate.py
+python -m restartos.cli run --auto-approve
 ```
 
 Keep `RESTARTOS_LIVE=0` for the repository's supported simulated path. Do not add real plant credentials to a portfolio environment.
@@ -45,6 +57,8 @@ To start the local service:
 ```bash
 python -m restartos.server --port 8000
 ```
+
+For a guided demonstration of the included UI and approval flow, see the [demo guide](docs/DEMO_GUIDE.md).
 
 ## Validate
 
